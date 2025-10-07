@@ -1,4 +1,4 @@
-                       Configuracion del Entorno 
+                                                    Configuracion del Entorno 
 
  Acceso a la Instancia EC2 (SSH)
 
