@@ -1,4 +1,6 @@
-Configuración del Entorno ________________________________________
+									Configuración del Entorno 
+
+
 Acceso a la Instancia EC2 (SSH)
 El primer paso es establecer una conexión segura a la instancia remota utilizando SSH (Secure Shell).
 Comando	Descripción
@@ -9,6 +11,8 @@ o	usuario@IP_de_EC2: Combina el usuario de la instancia (ej. ubuntu) y su IP pú
 o	
 •	 Referencia: Uso de SSH en Linux/Ubuntu
 ________________________________________
+
+
 Transferencia Segura de Archivos (SCP)
 Utiliza SCP (Secure Copy Protocol) para transferir de manera segura archivos locales necesarios a la instancia EC2.
 Comando	Descripción
@@ -26,12 +30,17 @@ sudo apt update	Sincroniza la lista de paquetes disponibles desde los repositori
 sudo apt upgrade	Actualiza todos los paquetes instalados a sus versiones más recientes.
 •	Referencias: Documentación oficial de Ubuntu sobre apt | Guía de actualización en Ubuntu
 ________________________________________
+
+
+
  Instalación de Python 3.12
 Instala la versión de Python 3.12 junto con herramientas esenciales para la gestión de entornos y la compilación.
 Comando	Descripción
 sudo apt install python3.12 python3.12-venv python3.12-dev	Instala el intérprete, la herramienta de entorno virtual (venv) y los archivos de desarrollo (dev).
 •	Referencias: Documentación oficial de Python 3.12
 ________________________________________
+
+
 Gestión del Entorno Virtual (venv)
 Utiliza un entorno virtual para aislar las dependencias de cada proyecto, evitando conflictos globales.
 Comando	Descripción
@@ -40,6 +49,9 @@ source mi_entorno/bin/activate	Activa el entorno virtual para comenzar a usarlo.
 deactivate	Desactiva el entorno y regresa al sistema base.
 •	Referencia: Crear entornos virtuales (venv)
 ________________________________________
+
+
+
 Instalación y Configuración de Docker
 Instala Docker y Docker Compose para la gestión eficiente de aplicaciones en contenedores.
 Comando	Descripción
@@ -50,8 +62,10 @@ sudo usermod -aG docker $USER	Agrega tu usuario al grupo docker para ejecutar co
 •	Uso: Permite empaquetar y ejecutar aplicaciones de manera consistente en cualquier lugar.
 •	 Referencias: Guía oficial de Docker en Ubuntu | Guía oficial de Docker Compose
 ________________________________________
- Instalación y Uso de Jupyter Notebook
-Instala Jupyter Notebook para una experiencia de codificación interactiva y basada en notebooks.
+
+
+                             Instalación y Uso de Jupyter Notebook
+Instalacion de Jupyter Notebook para una experiencia de codificación interactiva y basada en notebooks.
 Comando	Descripción
 pip install jupyter	Instala Jupyter Notebook (dentro del entorno virtual si está activo).
 jupyter notebook	Inicia el servidor de Jupyter para acceder a la interfaz web.
@@ -59,6 +73,8 @@ jupyter notebook	Inicia el servidor de Jupyter para acceder a la interfaz web.
 •	Función: Ideal para análisis de datos, prototipado rápido y documentación.
 •	Referencias: Documentación oficial de instalación y uso | Guía de uso interactivo de Jupyter Notebook
 ________________________________________
+
+
 
 Resumen del Entorno
 Una vez completados todos los pasos, tu entorno de desarrollo está completamente configurado:
@@ -70,7 +86,9 @@ Una vez completados todos los pasos, tu entorno de desarrollo está completament
 6.	Docker y Docker Compose funcionales para contenedores
 7.	Jupyter Notebook disponible para trabajo con Python 
 ________________________________________
-Puntos Adicionales para poder extraer un Zip 
+
+
+                                  Puntos Adicionales para poder extraer un Zip 
  Descomprimir archivos
 Si has subido tus archivos de proyecto o datasets comprimidos (comúnmente en formato .zip), necesitarás descomprimirlos con los siguientes comando se podrán decomprimirse 
 Comando	Descripción
@@ -84,13 +102,7 @@ Formato	Comando de Descompresión
 Crear .zip	zip -r backup.zip mi_carpeta/
 
 
-
-
-
-
-
-
- Verificar el archivo 
+                                      Verificar el archivo 
 Para confirmar que el archivo principal se ha extraído correctamente y tiene el formato esperado, puedes usar el comando head para mostrar las primeras líneas.
 Comando	Descripción
 head -n 5 netflix_titles.csv	Muestra las primeras 5 líneas del archivo netflix_titles.csv para verificar el encabezado y el contenido inicial.
@@ -103,6 +115,10 @@ ls	Comando de listado de directorios.	Guía del comando (Linuxize)
 tar	Utilidad para gestionar archivos .tar y compresión (.tar.gz).	Cómo usar el comando (Linuxize)
 
 gunzip	Utilidad para descomprimir archivos .gz.	Página Man (Manual) de  (Ubuntu Manpages)
+
+zip	Utilidad para crear archivos ZIP.	Página Man (Manual) de (Ubuntu Manpages)
+
+head	Muestra el inicio de un archivo.	Guía del comando (Linuxize)
 
 zip	Utilidad para crear archivos ZIP.	Página Man (Manual) de (Ubuntu Manpages)
 
