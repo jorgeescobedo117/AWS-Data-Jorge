@@ -74,17 +74,20 @@
       box-shadow:0 0 10px #9acd32;
     }
     .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:18px}
-    .card{
-      background:var(--card);
-      padding:14px;border-radius:12px;
-      border:1px solid rgba(255,255,255,0.03);
-      transition:transform .2s,border-color .2s, box-shadow .2s;
-    }
-    .card:hover{
-      transform:translateY(-2px);
-      border-color:var(--accent);
-      box-shadow:0 0 8px rgba(107,142,35,0.6);
-    }
+   .card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+    .card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
     .card h3{margin:0 0 8px;font-size:16px;color:#e6eef6}
     .card p{margin:0;color:var(--muted);font-size:14px}
     .tag{
@@ -125,7 +128,7 @@
       </div>
     </section>
 
-  <section id="proyectos" style="margin-top:30px">
+<section id="proyectos" style="margin-top:30px">
   <h2 style="margin:0 0 8px">Proyectos</h2>
   <div class="card-grid">
 
