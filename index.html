@@ -36,7 +36,7 @@
     h1{font-size:28px;margin:0;font-family:Orbitron, sans-serif;letter-spacing:1px;}
     p.lead{margin:4px 0 0;color:var(--muted)}
     nav{display:flex;gap:8px}
-    a.btn{
+    a.btn, button.btn{
       background:transparent;
       border:1px solid rgba(255,255,255,0.08);
       padding:10px 14px;
@@ -45,13 +45,45 @@
       text-decoration:none;
       font-weight:600;
       transition:all .18s;
+      cursor:pointer;
     }
-    a.btn:hover{
+    a.btn:hover, button.btn:hover{
       transform:translateY(-3px);
       box-shadow:0 0 12px var(--accent);
       border-color:var(--accent);
       color:var(--accent);
     }
+
+    /* ====== NUEVO: menú desplegable ====== */
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: var(--card);
+      min-width: 200px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      padding: 10px 0;
+      z-index: 1;
+    }
+    .dropdown-content a {
+      color: #e6eef6;
+      padding: 10px 16px;
+      text-decoration: none;
+      display: block;
+      transition: background 0.2s;
+    }
+    .dropdown-content a:hover {
+      background-color: rgba(255,255,255,0.08);
+      color: var(--accent);
+    }
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
+
     .hero{
       background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);
       padding:22px;border-radius:14px;
@@ -62,38 +94,20 @@
     .hero h2{margin:0 0 8px;font-size:22px;color:#d0d6d8}
     .hero p{margin:0;color:var(--muted)}
     .actions{margin-top:14px;display:flex;gap:10px}
-    .primary{
-      background:var(--accent);
-      color:#0a0f0a;
-      font-weight:700;
-      border:1px solid #3a4c3a;
-    }
-    .primary:hover{
-      background:var(--accent);
-      filter:brightness(1.2);
-      box-shadow:0 0 10px #9acd32;
-    }
     .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:18px}
-
     .card{
-background:var(--card);
-padding:14px;border-radius:12px;
-border:1px solid rgba(255,255,255,0.03);
-       color: inherit; 
-       text-decoration: none;
-transition:transform .2s,border-color .2s, box-shadow .2s;
-}
-    .card a {
-  color: inherit;                
-  text-decoration: none;        
-  display: block;                
-}
-
-   .card:hover{
-transform:translateY(-2px);
-border-color:var(--accent);
-box-shadow:0 0 8px rgba(107,142,35,0.6);
-}
+      background:var(--card);
+      padding:14px;border-radius:12px;
+      border:1px solid rgba(255,255,255,0.03);
+      color: inherit; 
+      text-decoration: none;
+      transition:transform .2s,border-color .2s, box-shadow .2s;
+    }
+    .card:hover{
+      transform:translateY(-2px);
+      border-color:var(--accent);
+      box-shadow:0 0 8px rgba(107,142,35,0.6);
+    }
     .card h3{margin:0 0 8px;font-size:16px;color:#e6eef6}
     .card p{margin:0;color:var(--muted);font-size:14px}
     .tag{
@@ -107,7 +121,11 @@ box-shadow:0 0 8px rgba(107,142,35,0.6);
     .socials{display:flex;gap:8px}
     .link-small{font-size:13px;color:var(--muted);text-decoration:none;transition:color .2s}
     .link-small:hover{color:var(--accent)}
-    @media (max-width:640px){header{flex-direction:column;align-items:flex-start;gap:12px}.brand{width:100%;justify-content:space-between}.hero{flex-direction:column;align-items:flex-start}}
+    @media (max-width:640px){
+      header{flex-direction:column;align-items:flex-start;gap:12px}
+      .brand{width:100%;justify-content:space-between}
+      .hero{flex-direction:column;align-items:flex-start}
+    }
   </style>
 </head>
 <body>
@@ -119,50 +137,59 @@ box-shadow:0 0 8px rgba(107,142,35,0.6);
           <h1>Jorge Escobedo Medina</h1>
         </div>
       </div>
+
       <nav aria-label="Navegación principal">
         <a class="btn" href="#inicio">Inicio</a>
-        <a class="btn" href="#proyectos">Proyectos</a>
+        <div class="dropdown">
+          <button class="btn">Actividades en clase</button>
+          <div class="dropdown-content">
+            <a href="actividad1.html">Actividad 1: Introducción</a>
+            <a href="actividad2.html">Actividad 2: Análisis de Datos</a>
+          </div>
+        </div>
+
+        <div class="dropdown">
+          <button class="btn">Tareas</button>
+          <div class="dropdown-content">
+            <a href="tarea1.html">Tarea 1: Dataset Steam</a>
+            <a href="tarea2.html">Tarea 2: Conexión EC2</a>
+            <a href="tarea3.html">Tarea 3: README Documentado</a>
+          </div>
+        </div>
       </nav>
     </header>
 
     <section id="inicio" class="hero" aria-labelledby="titulo-inicio">
       <div class="left">
         <h2 id="titulo-inicio">¡Hola! Soy Jorge</h2>
-        <div class="actions">
-          <a class="btn primary" href="Datasets_Steamm.html">Explorar Proyectos</a>
-        </div>
+        <p>Bienvenido a mi portafolio académico.</p>
       </div>
     </section>
     
 
-<section id="proyectos" style="margin-top:30px">
-  <h2 style="margin:0 0 8px">Proyectos</h2>
-  <div class="card-grid">
-
-    <a href="proyecto1.html" class="card">
-      <h3>Proyecto 1</h3>
-      <p>Descripción</p>
-      <div class="tag">Proyecto 1</div>
-    </a>
-
-    <a href="proyecto2.html" class="card">
-      <h3>Proyecto 2</h3>
-      <p>Descripción</p>
-      <div class="tag">Proyecto 2</div>
-    </a>
-
-    <a href="proyecto3.html" class="card">
-      <h3>Proyecto 3</h3>
-      <p>Descripción</p>
-      <div class="tag">Proyecto 3</div>
-    </a>
-
-  </div>
-</section>
-
+    <section id="proyectos" style="margin-top:30px">
+      <h2 style="margin:0 0 8px">Proyectos</h2>
+      <div class="card-grid">
+        <a href="proyecto1.html" class="card">
+          <h3>Proyecto 1</h3>
+          <p>Descripción</p>
+          <div class="tag">Proyecto 1</div>
+        </a>
+        <a href="proyecto2.html" class="card">
+          <h3>Proyecto 2</h3>
+          <p>Descripción</p>
+          <div class="tag">Proyecto 2</div>
+        </a>
+        <a href="proyecto3.html" class="card">
+          <h3>Proyecto 3</h3>
+          <p>Descripción</p>
+          <div class="tag">Proyecto 3</div>
+        </a>
+      </div>
+    </section>
 
     <footer>
-      <div> <span id="year"></span></div>
+      <div><span id="year"></span></div>
       <div class="socials">
         <a class="link-small" href="https://github.com/jorgeescobedo117/AWS-Data-Jorge/blob/main/README.md" target="_blank">README GITHUB</a>
       </div>
@@ -171,8 +198,6 @@ box-shadow:0 0 8px rgba(107,142,35,0.6);
 
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
-      
- 
   </script>
 </body>
 </html>
