@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Proyecto 2 — Dashboard de Videojuegos Gratuitos</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Inter, sans-serif;
+      background: #0a0f12;
+      color: #e6eef6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h1 {
+      color: #9acd32;
+      text-align: center;
+    }
+    .content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 1200px;
+      margin-top: 20px;
+    }
+    pre {
+      background:#1a1f24;
+      color:#9acd32;
+      padding:10px;
+      border-radius:8px;
+      overflow:auto;
+      max-height:600px;
+    }
+    img {
+      max-width:100%;
+      border-radius:12px;
+      box-shadow:0 0 10px rgba(0,0,0,0.4);
+    }
+    .code-section, .screenshot-section {
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    a {
+      color:#9acd32;
+      text-decoration:none;
+      font-weight:bold;
+    }
+    a:hover {
+      text-decoration:underline;
+    }
+    @media(max-width:900px){
+      .content {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Proyecto 4 —Extracción de datos de base de datos con AWS Lambda y almacenamiento en S3  </h1>
+
+  <div class="content">
+    <!-- Código Python -->
+    <div class="code-section">
+      <h3>Código Python</h3>
+      <pre><code>
+import json
+import boto3
+import pymysql  # usa psycopg2 si es PostgreSQL
+import csv
+from io import StringIO
+from datetime import datetime
+
+DB_HOST = "database-1.cd8w4cuu6a79.us-west-1.rds.amazonaws.com"  # host que ves en DBeaver
+DB_USER = "admin"  # usuario
+DB_PASS = "admin123123"
+DB_NAME = "awsdata"  
+BUCKET_NAME = "xideralaws-curso-jorge"  
+TABLE_NAME = "personas"
+
+s3 = boto3.client('s3')
+
+def lambda_handler(event, context):
+    try:
+        # Conexión a la BD
+        connection = pymysql.connect(
+            host="database-1.cd8w4cuu6a79.us-west-1.rds.amazonaws.com",
+            user="admin",
+            password="admin123123",
+            database="awsdata",
+            connect_timeout=10
+        )
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+        cursor.execute(f"SELECT * FROM {"personas"};")
+        data = cursor.fetchall()
+
+        if not data:
+            return {"statusCode": 200, "body": "No se encontraron registros."}
+
+        # Crear CSV
+        csv_buffer = StringIO()
+        writer = csv.DictWriter(csv_buffer, fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
+
+        # Nombre archivo
+        filename = f"personas_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+
+        # Subir a S3
+        s3.put_object(
+            Bucket=BUCKET_NAME,
+            Key=filename,
+            Body=csv_buffer.getvalue(),
+            ContentType='text/csv'
+        )
+
+        cursor.close()
+        connection.close()
+
+        return {
+            "statusCode": 200,
+            "body": json.dumps(f"Archivo {filename} guardado en S3://{BUCKET_NAME}")
+        }
+
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": json.dumps(f"Error: {str(e)}")
+        }
+
+      </code></pre>
+      <a href="https://github.com/jorgeescobedo117/AWS-Data-Jorge/blob/main/videogames.py" target="_blank">
+        Ver código completo en GitHub
+      </a>
+    </div>
+
+    <!-- Captura de pantalla -->
+    <div class="screenshot-section">
+      <h3>Captura del layer utilizado</h3>
+      <img src="layer.png" ">
+       <h3>Captura del archivo en el bucket</h3>
+      <img src="bucket.png">
+     <h3>Captura del CSV</h3>
+      <img src="capturascv.png">
+    </div>
+  </div>
+   <div style="text-align:center; margin-top:40px;">
+  <a href="index.html" style="
+    background-color:9acd32;
+    color:white;
+    text-shadow: 0 0 3px #9acd32;
+    padding:10px 20px;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:bold;
+    transition: background-color 0.2s ease;">
+     Volver al inicio :D 
+  </a>
+</div>
+</body>
+</html>
