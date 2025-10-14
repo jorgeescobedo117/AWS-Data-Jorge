@@ -55,34 +55,53 @@
     }
 
     /* ====== NUEVO: menú desplegable ====== */
-    .dropdown {
-      position: relative;
-      display: inline-block;
-    }
-    .dropdown-content {
-      display: none;
-      position: absolute;
-      background-color: var(--card);
-      min-width: 200px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.4);
-      padding: 10px 0;
-      z-index: 1;
-    }
-    .dropdown-content a {
-      color: #e6eef6;
-      padding: 10px 16px;
-      text-decoration: none;
-      display: block;
-      transition: background 0.2s;
-    }
-    .dropdown-content a:hover {
-      background-color: rgba(255,255,255,0.08);
-      color: var(--accent);
-    }
-    .dropdown:hover .dropdown-content {
-      display: block;
-    }
+/* ====== NUEVO: menú desplegable ====== */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%; /* coloca el menú justo debajo del botón */
+  left: 0;
+  background-color: var(--card);
+  min-width: 200px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  padding: 8px 0;
+  z-index: 1000;
+  max-height: 250px; /* limita la altura */
+  overflow-y: auto;  /* agrega scroll si hay muchos elementos */
+}
+
+/* Scroll estético */
+.dropdown-content::-webkit-scrollbar {
+  width: 6px;
+}
+.dropdown-content::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.dropdown-content a {
+  color: #e6eef6;
+  padding: 10px 16px;
+  text-decoration: none;
+  display: block;
+  transition: background 0.2s, color 0.2s;
+}
+
+.dropdown-content a:hover {
+  background-color: rgba(255,255,255,0.08);
+  color: var(--accent);
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
 
     .hero{
       background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);
@@ -172,7 +191,7 @@
             <a href="tarea6.html">Tarea 6: Transformacion de datos con Lambdas</a>
              <a href="DiagramaAWS.png">Tarea 7: Diagrama AWS ETL</a>
             <a href="Proyecto4.html">Tarea 8: Extracción de datos de base de datos con AWS Lambda</a>
-             <a href="contraseña.html">Tarea 9: Extracción de datos segura sin contraseñas </a>
+             <a href="Contraseña.html">Tarea 9: Extracción de datos segura sin contraseñas </a>
             
           </div>
         </div>
