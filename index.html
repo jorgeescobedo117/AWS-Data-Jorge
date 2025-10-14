@@ -55,7 +55,7 @@
     }
 
     /* ====== NUEVO: menú desplegable ====== */
-/* ====== NUEVO: menú desplegable ====== */
+/* ====== MENÚ DESPLEGABLE CON SCROLL INTERNO ====== */
 .dropdown {
   position: relative;
   display: inline-block;
@@ -64,25 +64,30 @@
 .dropdown-content {
   display: none;
   position: absolute;
-  top: 100%; /* coloca el menú justo debajo del botón */
+  top: 100%; /* justo debajo del botón */
   left: 0;
   background-color: var(--card);
   min-width: 200px;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0,0,0,0.4);
-  padding: 8px 0;
+  padding: 6px 0;
   z-index: 1000;
-  max-height: 250px; /* limita la altura */
-  overflow-y: auto;  /* agrega scroll si hay muchos elementos */
+
+  /* Mostrar máximo 6 elementos (altura aprox 6x40px = 240px) */
+  max-height: 240px;
+  overflow-y: auto; /* Scroll interno */
 }
 
-/* Scroll estético */
+/* Scroll elegante */
 .dropdown-content::-webkit-scrollbar {
   width: 6px;
 }
 .dropdown-content::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
+}
+.dropdown-content::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.4);
 }
 
 .dropdown-content a {
