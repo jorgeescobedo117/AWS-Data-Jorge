@@ -1,6 +1,6 @@
 import json
 import boto3
-import pymysql  # usa psycopg2 si es PostgreSQL
+import pymysql 
 import csv
 from io import StringIO
 from datetime import datetime
