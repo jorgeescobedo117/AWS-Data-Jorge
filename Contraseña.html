@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía Junior: Extracción Segura de Datos con AWS Lambda y S3</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Space+Mono:wght@400;700&display=swap');
+        
+        :root {
+            --primary-color: #2c3e50; /* Azul oscuro */
+            --secondary-color: #3498db; /* Azul vibrante */
+            --accent-color: #e74c3c; /* Rojo para alertas/sensible */
+            --safe-color: #27ae60; /* Verde para seguridad */
+            --bg-light: #ecf0f1;
+            --bg-white: #ffffff;
+            --font-main: 'Roboto', sans-serif;
+            --font-code: 'Space Mono', monospace;
+        }
+
+        body {
+            font-family: var(--font-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-light);
+            color: var(--primary-color);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 20px;
+            background: var(--bg-white);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: var(--bg-white);
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 8px 8px 0 0;
+        }
+
+        header h1 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+        h2 {
+            color: var(--secondary-color);
+            border-bottom: 3px solid var(--secondary-color);
+            padding-bottom: 5px;
+            margin-top: 30px;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-top: 20px;
+        }
+
+        .alert-box {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+
+        .alert-sensitive {
+            background-color: #f7e6e5;
+            border-left: 5px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .alert-safe {
+            background-color: #e6f7ef;
+            border-left: 5px solid var(--safe-color);
+            color: var(--safe-color);
+        }
+
+        .code-block {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: var(--font-code);
+            font-size: 0.9em;
+            margin: 15px 0;
+        }
+
+        .flow-chart {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .flow-step {
+            width: 150px;
+            padding: 15px;
+            background-color: var(--secondary-color);
+            color: var(--bg-white);
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .flow-arrow {
+            font-size: 2em;
+            color: var(--primary-color);
+            margin: 0 10px;
+        }
+        
+        .safe-practice {
+            border: 2px dashed var(--safe-color);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1> Extracción Segura de Datos: Lambda </h1>
+        </header>
+
+        <h2>1. El Diagrama de Flujo del Proceso 🚀</h2>
+        <p>Tu objetivo es mover datos de personas desde una base de datos a un archivo CSV en un *bucket* de S3, asegurando todo el trayecto.</p>
+
+        <div class="flow-chart">
+            <div class="flow-step">Base de Datos (Origen)</div>
+            <div class="flow-arrow">➡️</div>
+            <div class="flow-step" style="background-color: var(--safe-color);">AWS Secrets Manager <br>(Credenciales Seguras)</div>
+            <div class="flow-arrow">➡️</div>
+            <div class="flow-step">AWS Lambda (Ejecución y DataFrame)</div>
+            <div class="flow-arrow">➡️</div>
+            <div class="flow-step" style="background-color: var(--accent-color);">Amazon S3 Bucket <br>(CSV Cifrado con KMS)</div>
+        </div>
+
+        <hr>
+
+        <h2>2. ¿Cómo NO Guardar Datos Sensibles?</h2>
+
+        <div class="alert-box alert-sensitive">
+            <h3>¡NUNCA PONGAS LAS CREDENCIALES DIRECTAMENTE EN EL CÓDIGO!</h3>
+            <p><strong>El error más común es almacenar secretos (contraseñas, llaves API) en:</strong></p>
+            <ul>
+                <li>El archivo de código (`.py`) de Lambda.</li>
+                <li>Variables de entorno de Lambda, a pesar de estar cifradas por AWS.</li>
+            </ul>
+            <p>Esto viola el principio de **separación de configuración y código** y expone tus secretos si alguien accede al código o a la configuración de la función.</p>
+        </div>
+
+        <hr>
+
+        <h2>3. La Manera Correcta de Guardar Datos Sensibles (Credenciales)</h2>
+        <p>Para la conexión de tu Lambda a la Base de Datos, usarás **AWS Secrets Manager**.</p>
+
+        <div class="safe-practice">
+            <h3>Paso 1: Almacenar la Contraseña de la DB</h3>
+            <p>Guarda el usuario, contraseña y host de tu base de datos en **AWS Secrets Manager**. Este servicio está diseñado para almacenar, rotar y gestionar secretos de forma segura.</p>
+
+            <h3>Paso 2: Usar Variables de Entorno de Forma Segura</h3>
+            <p>En las **Variables de Entorno** de tu función Lambda, solo guarda el **ARN** (Amazon Resource Name) del secreto, ¡no el secreto en sí!</p>
+            <div class="code-block">
+                VARIABLE_ENTORNO: SECRET_ARN <br>
+                VALOR: arn:aws:secretsmanager:us-east-1:123456789012:secret:MiDBSecret-XXXXX
+            </div>
+            
+            <h3>Paso 3: Mínimo Privilegio (IAM Role)</h3>
+            <p>Tu función Lambda necesita un **Rol de IAM** que solo le dé permisos para **leer** ese secreto específico de Secrets Manager (<code>secretsmanager:GetSecretValue</code>).</p>
+        </div>
+
+        <hr>
+
+        <h2>4. Transformando y Asegurando el DataFrame (Lambda Code)</h2>
+
+        <h3>A. Anonimización y Seudonimización (Transformación de Datos Sensibles)</h3>
+        <p>Si los datos de la "tabla de personas" contienen información muy sensible (ej: emails, DNI, números de teléfono), debes **transformarlos antes de guardarlos en S3**.</p>
+        <div class="code-block">
+            # Cargar datos de la DB a un DataFrame (usando Pandas) <br>
+            df = pd.DataFrame(datos_extraidos) <br>
+            <br>
+            # **¡Zona de Anonimización!** <br>
+            # Reemplazar el número de teléfono por una versión con hash (seudonimización) <br>
+            df['telefono_hash'] = df['telefono'].apply(lambda x: hashlib.sha256(x.encode()).hexdigest()) <br>
+            df = df.drop(columns=['telefono']) # ⚠️ **Eliminar la columna original sensible**
+        </div>
+
+        <h3>B. Creación y Carga del CSV</h3>
+        <p>El DataFrame se convierte en un objeto en memoria (CSV) y luego se sube a S3.</p>
+        <div class="code-block">
+            # Convertir DataFrame a CSV en memoria (IO Buffer) <br>
+            csv_buffer = io.StringIO() <br>
+            df.to_csv(csv_buffer, index=False) <br>
+            <br>
+            # Cargar a S3 <br>
+            s3_client.put_object( <br>
+                Bucket=os.environ.get('BUCKET_NAME'), <br>
+                Key='datos/archivo_seguro.csv', <br>
+                Body=csv_buffer.getvalue() <br>
+                # **El cifrado se aplica automáticamente por la configuración del Bucket** <br>
+            )
+        </div>
+
+        <hr>
+
+        <h2>5. Protección Final en S3 (Datos en Reposo)</h2>
+
+        <h3>A. Cifrado Predeterminado del Bucket (SSE-KMS)</h3>
+        <p>Esta es la defensa clave. Debes configurar el **Bucket de S3** para que **automáticamente cifre** cada archivo que se suba, utilizando **AWS KMS (Key Management Service)**.</p>
+        <div class="alert-box alert-safe">
+            **SSE-KMS** es el estándar de oro. AWS KMS gestiona las claves de cifrado, y tu archivo CSV sensible estará cifrado en todo momento. Solo las identidades (como tu Lambda) con permiso para usar la clave KMS podrán descifrarlo.
+        </div>
+
+        <h3>B. Bloqueo de Acceso Público</h3>
+        <p>Asegúrate de que la configuración de **Bloqueo de Acceso Público** esté activada en el 100% de tus buckets para prevenir exposiciones accidentales.</p>
+        
+        <h3>C. Permisos de S3 (IAM Role)</h3>
+        <p>Recuerda darle a tu Lambda permisos <code>s3:PutObject</code> solo en **ese bucket específico**, y permisos para usar la **clave KMS** que el bucket utiliza para cifrar.</p>
+    </div>
+</body>
+</html>
