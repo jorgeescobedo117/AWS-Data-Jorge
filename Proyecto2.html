@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Proyecto 2 — Dashboard de Videojuegos Gratuitos</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Inter, sans-serif;
+      background: #0a0f12;
+      color: #e6eef6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h1 {
+      color: #9acd32;
+      text-align: center;
+    }
+    .content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 1200px;
+      margin-top: 20px;
+    }
+    pre {
+      background:#1a1f24;
+      color:#9acd32;
+      padding:10px;
+      border-radius:8px;
+      overflow:auto;
+      max-height:600px;
+    }
+    img {
+      max-width:100%;
+      border-radius:12px;
+      box-shadow:0 0 10px rgba(0,0,0,0.4);
+    }
+    .code-section, .screenshot-section {
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    a {
+      color:#9acd32;
+      text-decoration:none;
+      font-weight:bold;
+    }
+    a:hover {
+      text-decoration:underline;
+    }
+    @media(max-width:900px){
+      .content {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Proyecto 2 — Dashboard de Videojuegos Gratuitos</h1>
+
+  <div class="content">
+    <!-- Código Python -->
+    <div class="code-section">
+      <h3>Código Python</h3>
+      <pre><code>
+import requests
+import pandas as pd
+import streamlit as st
+import plotly.express as px
+
+st.set_page_config(page_title="Videojuegos Gratuitos Dashboard", layout="wide")
+
+@st.cache_data
+def load_data():
+    url = "https://www.freetogame.com/api/games"
+    resp = requests.get(url)
+    resp.raise_for_status()
+    df = pd.DataFrame(resp.json())
+    return df
+
+df = load_data()
+
+st.title("Dashboard de Videojuegos Gratuitos")
+
+platforms = sorted(df['platform'].unique())
+genres = sorted(df['genre'].unique())
+release_years = sorted(df['release_date'].str[:4].unique())
+
+plat_filter = st.sidebar.multiselect("Plataforma", options=platforms, default=platforms)
+genre_filter = st.sidebar.multiselect("Género", options=genres, default=genres)
+year_filter = st.sidebar.multiselect("Año de lanzamiento", options=release_years, default=release_years)
+
+df['release_year'] = df['release_date'].str[:4]
+filtered = df[
+    (df['platform'].isin(plat_filter)) &
+    (df['genre'].isin(genre_filter)) &
+    (df['release_year'].isin(year_filter))
+]
+
+total_games = len(df)
+unique_genres = df['genre'].nunique()
+avg_release_year = df['release_year'].astype(int).mean()
+
+col1, col2, col3 = st.columns(3)
+col1.metric("Total de juegos gratis", total_games)
+col2.metric("Géneros únicos", unique_genres)
+col3.metric("Año promedio de lanzamiento", f"{avg_release_year:.0f}")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    plat_counts = filtered['platform'].value_counts().reset_index()
+    plat_counts.columns = ['platform', 'count']
+    fig1 = px.bar(plat_counts, x='platform', y='count', title="Juegos por plataforma")
+    st.plotly_chart(fig1, use_container_width=True)
+
+with col2:
+    genre_counts = filtered['genre'].value_counts().reset_index()
+    genre_counts.columns = ['genre', 'count']
+    fig2 = px.pie(genre_counts, names='genre', values='count', title="Distribución por género")
+    st.plotly_chart(fig2, use_container_width=True)
+
+st.subheader("Algunos registros")
+st.dataframe(filtered.head(20), use_container_width=True)
+      </code></pre>
+      <a href="https://github.com/jorgeescobedo117/AWS-Data-Jorge/blob/main/videogames.py" target="_blank">
+        Ver código completo en GitHub
+      </a>
+    </div>
+
+    <!-- Captura de pantalla -->
+    <div class="screenshot-section">
+      <h3>Captura del Dashboard</h3>
+      <img src="captura.png" alt="Captura del Dashboard">
+       <h3>Captura del Kernel</h3>
+      <img src="kernel.png" alt="Captura del Dashboard">
+    </div>
+  </div>
+   <div style="text-align:center; margin-top:40px;">
+  <a href="index.html" style="
+    background-color:9acd32;
+    color:white;
+    text-shadow: 0 0 3px #9acd32;
+    padding:10px 20px;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:bold;
+    transition: background-color 0.2s ease;">
+     Volver al inicio :D 
+  </a>
+</div>
+</body>
+</html>

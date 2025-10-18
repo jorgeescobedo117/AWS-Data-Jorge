@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Proyecto 1 — RickAndMorty</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Inter, sans-serif;
+      background: #0a0f12;
+      color: #e6eef6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h1 {
+      color: #9acd32;
+      text-align: center;
+    }
+    .content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 1200px;
+      margin-top: 20px;
+    }
+    pre {
+      background:#1a1f24;
+      color:#9acd32;
+      padding:10px;
+      border-radius:8px;
+      overflow:auto;
+      max-height:400px;
+    }
+    img {
+      max-width:100%;
+      border-radius:12px;
+      box-shadow:0 0 10px rgba(0,0,0,0.4);
+    }
+    .code-section, .screenshot-section {
+      display:flex;
+      flex-direction:column;
+      gap:25px;
+    }
+    a {
+      color:#9acd32;
+      text-decoration:none;
+      font-weight:bold;
+    }
+    a:hover {
+      text-decoration:underline;
+    }
+    @media(max-width:900px){
+      .content {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Proyecto 2 — Dashboard de Videojuegos Gratuitos</h1>
+
+  <div class="content">
+    <!-- Código Python -->
+    <div class="code-section">
+      <h3>Código Python</h3>
+      <pre><code>
+import pandas as pd 
+import streamlit as st
+import plotly.express as px 
+import matplotlib.pyplot as plt
+ 
+st.set_page_config(page_title="Rick and Morty Dashboard", layout="wide")
+ 
+@st.cache_data
+def load_data():
+    return pd.read_csv("r_m.csv")
+ 
+df = load_data()
+ 
+st.title("Rick and Morty Dashboard")
+ 
+st.sidebar.header("Filtros")
+species_filter = st.sidebar.multiselect("Especie", options=df['species'].unique(), default=df['species'].unique())
+status_filter = st.sidebar.multiselect("Estado", options=df['status'].unique(), default=df['status'].unique())
+ 
+filtered_df = df[(df['species'].isin(species_filter)) & (df['status'].isin(status_filter))]
+ 
+ 
+# KPI 
+total_characters = len(df)
+avg_episodes = filtered_df["episode_count"].mean()
+unique_species = filtered_df["species"].nunique()
+ 
+col1, col2, col3 = st.columns(3)
+col1.metric("Total de personajes", total_characters)
+col2.metric("Promedio de episodios", avg_episodes)
+col3.metric("Especies únicas", unique_species)
+ 
+ 
+col1, col2 = st.columns(2)
+ 
+with col1:
+    status_count = df["status"].value_counts()
+    plt.figure(figsize=(6,4))
+    fig1 = px.bar(
+        status_count,
+        color_discrete_map={"alive":"green", "dead":"red", "unknow":"gray"}
+    )
+    st.plotly_chart(fig1,use_container_width=True)
+with col2:
+    fig2 = px.pie(filtered_df, names="species", title="distribution")
+    st.plotly_chart(fig2, use_container_width=True)
+ 
+ 
+st.subheader("Datos completos")
+st.dataframe(df.head(20),  use_container_width=True)
+      </code></pre>
+      <a href="https://github.com/jorgeescobedo117/AWS-Data-Jorge/blob/main/RickAndMorty.py" target="_blank">
+        Ver código completo en GitHub
+      </a>
+       <h3>Captura del Dashboard</h3>
+      <img src="capturarick.png" alt="Captura del Dashboard">
+    </div>
+
+     
+   
+  </div>
+  <div style="text-align:center; margin-top:40px;">
+  <a href="index.html" style="
+    background-color:9acd32;
+    color:white;
+    text-shadow: 0 0 3px #9acd32;
+    padding:10px 20px;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:bold;
+    transition: background-color 0.2s ease;">
+     Volver al inicio :D 
+  </a>
+</div>
+</body>
+  
+</html>

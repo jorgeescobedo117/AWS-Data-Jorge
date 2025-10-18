@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tarea 6 — Integrar una Lambda para una transformacion </title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Inter, sans-serif;
+      background: #0a0f12;
+      color: #e6eef6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h1 {
+      color: #9acd32;
+      text-align: center;
+    }
+    .content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 1200px;
+      margin-top: 20px;
+    }
+    pre {
+      background:#1a1f24;
+      color:#9acd32;
+      padding:10px;
+      border-radius:8px;
+      overflow:auto;
+      max-height:600px;
+    }
+    img {
+      max-width:100%;
+      border-radius:12px;
+      box-shadow:0 0 10px rgba(0,0,0,0.4);
+    }
+    .code-section, .screenshot-section {
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    a {
+      color:#9acd32;
+      text-decoration:none;
+      font-weight:bold;
+    }
+    a:hover {
+      text-decoration:underline;
+    }
+    @media(max-width:900px){
+      .content {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Tarea 6 — Lambda Transformacion </h1>
+
+  <div class="content">
+    <!-- Código Python -->
+    <div class="code-section">
+      <h3>Código Python</h3>
+      <pre><code>
+import json
+import boto3
+import pandas as pd
+import io
+from datetime import datetime
+
+# Cliente de S3
+s3 = boto3.client("s3")
+
+#  Función de transformación
+def transformar_datos(df):
+    # Eliminamos filas vacías en columnas clave
+    df = df.dropna(subset=["Category", "Sales", "Profit", "Quantity", "Discount"])
+
+    # Agrupamos por categoría y resumimos métricas
+    resumen = df.groupby("Category", as_index=False).agg({
+        "Sales": "sum",
+        "Profit": "sum",
+        "Quantity": "sum",
+        "Discount": "mean"
+    })
+
+    # Renombramos columnas 
+    resumen.rename(columns={
+        "Sales": "Total_Sales",
+        "Profit": "Total_Profit",
+        "Quantity": "Total_Quantity",
+        "Discount": "Average_Discount"
+    }, inplace=True)
+
+    return resumen
+
+
+def lambda_handler(event, context):
+    # Configuración del bucket y archivo fuente
+    bucket = "xideralaws-curso-jorge"
+    key = "Sample.csv"
+
+    # Nombre del archivo de salida con fecha actual
+    fecha_actual = datetime.now().strftime("%Y-%m-%d")
+    output_key = f"data_transformado_{fecha_actual}.csv"
+
+    try:
+        #  Leer archivo original desde S3
+        obj = s3.get_object(Bucket=bucket, Key=key)
+        body = obj["Body"].read()
+        df = pd.read_csv(io.BytesIO(body))
+
+        #  Aplicar transformación
+        df_transformado = transformar_datos(df)
+
+        #  Guardar archivo transformado en memoria
+        buffer = io.StringIO()
+        df_transformado.to_csv(buffer, index=False)
+
+        # Subir el nuevo archivo a S3
+        s3.put_object(Bucket=bucket, Key=output_key, Body=buffer.getvalue())
+
+        #  Retornar respuesta y vista previa
+        head_response = df_transformado.head(5).to_dict(orient="records")
+
+        return {
+            "statusCode": 200,
+            "body": f"Archivo transformado guardado en s3://{bucket}/{output_key}",
+            "preview": head_response
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+      </code></pre>
+      <a href="https://github.com/jorgeescobedo117/AWS-Data-Jorge/blob/main/tarea6.py" target="_blank">
+        Ver código completo en GitHub
+      </a>
+    </div>
+
+    <!-- Captura de pantalla -->
+    <div class="screenshot-section">
+      <h3>Captura de la data transformada</h3>
+      <img src="datatransformada.png" alt="CapturaData">
+       <h3>Captura del Trigger </h3>
+      <img src="addtrigger.png" alt="trigger">
+      <h3>Captura de los datos crudos </h3>
+      <img src="datos.png" alt="trigger">
+    </div>
+  </div>
+   <div style="text-align:center; margin-top:40px;">
+  <a href="index.html" style="
+    background-color:9acd32;
+    color:white;
+    text-shadow: 0 0 3px #9acd32;
+    padding:10px 20px;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:bold;
+    transition: background-color 0.2s ease;">
+     Volver al inicio :D 
+  </a>
+</div>
+</body>
+</html>

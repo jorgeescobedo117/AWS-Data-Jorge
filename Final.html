@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Proyecto ETL Serverless — AWS Superstore</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: #0a0f12;
+      color: #e6eef6;
+      padding: 20px;
+    }
+    h1, h2, h3 {
+      color: #9acd32;
+      text-align: center;
+    }
+    h1 { font-size: 2.5rem; margin-top: 10px; }
+    .intro, .section {
+      background: #11181c;
+      border-radius: 14px;
+      padding: 20px;
+      max-width: 1000px;
+      margin: 25px auto;
+      line-height: 1.7;
+      color: #b0b8c0;
+      box-shadow: 0 0 25px rgba(0,255,0,0.05);
+      animation: fadeIn 0.8s ease;
+    }
+    .intro strong, .section strong { color: #9acd32; }
+    .section:hover {
+      box-shadow: 0 0 30px rgba(154,205,50,0.2);
+      transition: 0.3s;
+    }
+    ul { margin-left: 25px; }
+    .diagram {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .diagram img {
+      max-width: 90%;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(154,205,50,0.3);
+    }
+    .accordion {
+      background: #1a1f24;
+      border-radius: 10px;
+      margin-top: 10px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .accordion-header {
+      background: #12171a;
+      cursor: pointer;
+      padding: 14px 20px;
+      color: #9acd32;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .accordion-header:hover { background: #151c20; }
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.4s ease;
+    }
+    .accordion.active .accordion-content {
+      max-height: 1000px;
+      padding: 10px 20px;
+    }
+    pre {
+      background: #0f1418;
+      color: #9acd32;
+      padding: 12px;
+      border-radius: 10px;
+      overflow-x: auto;
+      max-height: 500px;
+    }
+    button.copy-btn {
+      background: none;
+      border: 1px solid #9acd32;
+      color: #9acd32;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 0.9em;
+      margin-bottom: 8px;
+    }
+    button.copy-btn:hover { background: #9acd32; color: #0a0f12; }
+    footer {
+      text-align: center;
+      margin: 40px 0;
+      color: #9acd32;
+      font-weight: bold;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Proyecto ETL — Superstore AWS</h1>
+
+  <!-- 🔹 Descripción del Proyecto -->
+  <div class="intro">
+    <h2>Descripción General</h2>
+    <p>
+      Este proyecto implementa un <strong>Pipeline ETL Serverless</strong> en <strong>AWS</strong>,
+      diseñado para automatizar el procesamiento de datos del dataset <strong>Superstore</strong> (Kaggle).
+      La solución combina servicios <strong>Lambda, S3, RDS, EventBridge y Streamlit</strong> para una arquitectura moderna,
+      eficiente y escalable.
+    </p>
+    <ul>
+      <li>✔️ 100% Serverless: sin instancias permanentes</li>
+      <li>✔️ Datos almacenados en formato <strong>Parquet comprimido</strong></li>
+      <li>✔️ Orquestación automática con <strong>EventBridge</strong></li>
+      <li>✔️ <strong>KPIs</strong> de ventas, rentabilidad y tendencias generados dinámicamente</li>
+      <li>✔️ Dashboard interactivo con <strong>Plotly + Streamlit</strong></li>
+    </ul>
+    <p><strong>Tecnologías:</strong> AWS Lambda · S3 · RDS MySQL · Python · Pandas · Streamlit · EventBridge</p>
+  </div>
+
+  <!-- 🔹 Arquitectura -->
+  <div class="section">
+    <h2>Arquitectura General ETL</h2>
+    <p>Flujo completo desde la extracción de datos en S3 hasta la visualización de KPIs en Streamlit.</p>
+    <div class="diagram">
+      <img src="Diagramaa.png" alt="Diagrama ETL AWS">
+    </div>
+  </div>
+
+  <!-- 🔹 Lambda 1 -->
+  <div class="section">
+    <h2>Lambda 1 — Limpieza de Datos</h2>
+    <p>Lee el CSV desde S3, limpia, transforma y guarda los resultados como Parquet procesado.</p>
+    <div class="accordion">
+      <div class="accordion-header">Ver código Lambda Clean <span>▼</span></div>
+      <div class="accordion-content">
+        <button class="copy-btn" onclick="copyCode('clean')">Copiar</button>
+        <pre id="clean"><code>
+
+import boto3
+import pandas as pd
+import io
+import os
+import re
+from datetime import datetime
+
+s3 = boto3.client("s3")
+
+def sanitize_column(name):
+    """Normaliza los nombres de columnas para evitar errores en SQL."""
+    name = name.strip().lower()
+    name = re.sub(r"[^0-9a-zA-Z_]", "_", name)
+    return name
+
+def lambda_handler(event, context):
+    # Variables de entorno
+    bucket = os.environ["BUCKET"]
+    raw_key = os.environ["RAW_KEY"]
+
+    # Leer CSV desde S3
+    obj = s3.get_object(Bucket=bucket, Key=raw_key)
+    csv_bytes = obj["Body"].read()
+
+    try:
+        df = pd.read_csv(io.BytesIO(csv_bytes), encoding="utf-8")
+    except UnicodeDecodeError:
+        df = pd.read_csv(io.BytesIO(csv_bytes), encoding="latin1")
+
+    # ===============================
+    # LIMPIEZA BÁSICA
+    # ===============================
+    # Normalizar nombres de columnas
+    df.columns = [sanitize_column(c) for c in df.columns]
+
+    # Eliminar filas completamente vacías
+    df = df.dropna(how="all")
+
+    # Eliminar la columna 'row_id' si existe
+    if "row_id" in df.columns:
+        df = df.drop(columns=["row_id"])
+        print(" Columna 'row_id' eliminada del dataset.")
+
+    # Convertir fechas
+    for col in ["order_date", "ship_date"]:
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors="coerce")
+
+    # ===============================
+    # GUARDAR ARCHIVO PROCESADO
+    # ===============================
+    now = datetime.now().strftime("%Y%m%d_%H%M%S")
+    processed_key = f"processed/superstore_{now}.parquet"
+
+    parquet_buffer = io.BytesIO()
+    df.to_parquet(parquet_buffer, index=False, compression="snappy")
+
+    s3.put_object(Bucket=bucket, Key=processed_key, Body=parquet_buffer.getvalue())
+
+    return {
+        "statusCode": 200,
+        "body": f" Archivo limpio guardado en s3://{bucket}/{processed_key} ({len(df)} filas, {len(df.columns)} columnas)"
+    }
+
+        
+        </code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔹 Lambda 2 -->
+  <div class="section">
+    <h2>Lambda 2 — Inserción en MySQL</h2>
+    <p>Crea la base de datos y tabla si no existen e inserta los registros procesados en RDS MySQL.</p>
+    <div class="accordion">
+      <div class="accordion-header">Ver código Lambda Insert <span>▼</span></div>
+      <div class="accordion-content">
+        <button class="copy-btn" onclick="copyCode('insert')">Copiar</button>
+        <pre id="insert"><code>
+
+import boto3
+import pandas as pd
+import pymysql
+import io
+import os
+
+s3 = boto3.client("s3")
+
+def lambda_handler(event, context):
+    # Variables de entorno
+    bucket = os.environ["BUCKET"]
+    key = os.environ["PROCESSED_KEY"]
+    db_host = os.environ["DB_HOST"]
+    db_user = os.environ["DB_USER"]
+    db_pass = os.environ["DB_PASS"]
+    db_name = os.environ.get("DB_NAME", "superstore")
+
+    # Leer Parquet desde S3
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    df = pd.read_parquet(io.BytesIO(obj["Body"].read()))
+
+    # Conexión MySQL
+    conn = pymysql.connect(host=db_host, user=db_user, password=db_pass)
+    cursor = conn.cursor()
+    cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
+    conn.select_db(db_name)
+
+    # Crear tabla base
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales (
+            order_id VARCHAR(50),
+            order_date DATETIME,
+            ship_date DATETIME,
+            ship_mode VARCHAR(100),
+            customer_id VARCHAR(50),
+            customer_name VARCHAR(100),
+            segment VARCHAR(100),
+            country VARCHAR(100),
+            city VARCHAR(100),
+            state VARCHAR(100),
+            postal_code VARCHAR(20),
+            region VARCHAR(100),
+            product_id VARCHAR(50),
+            category VARCHAR(100),
+            sub_category VARCHAR(100),
+            product_name VARCHAR(200),
+            sales DECIMAL(12,2),
+            quantity INT,
+            discount DECIMAL(6,4),
+            profit DECIMAL(12,2)
+        )
+    """)
+
+    # Insertar datos
+    placeholders = ", ".join(["%s"] * len(df.columns))
+    cols = ", ".join([f"`{c}`" for c in df.columns])
+    sql = f"INSERT INTO sales ({cols}) VALUES ({placeholders})"
+    data = [tuple(x) for x in df.to_numpy()]
+    cursor.executemany(sql, data)
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    return {"statusCode": 200, "body": f"Datos insertados: {len(df)} registros"}
+
+                </code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔹 Lambda 3 -->
+  <div class="section">
+    <h2>Lambda 3 — Generación de KPIs</h2>
+    <p>Genera métricas y tablas resumen: ventas totales, margen, productos top, ventas por mes y región.</p>
+    <div class="accordion">
+      <div class="accordion-header">Ver código Lambda KPIs <span>▼</span></div>
+      <div class="accordion-content">
+        <button class="copy-btn" onclick="copyCode('kpis')">Copiar</button>
+        <pre id="kpis"><code>
+
+import pymysql
+import os
+
+def lambda_handler(event, context):
+    conn = pymysql.connect(
+        host=os.environ["DB_HOST"],
+        user=os.environ["DB_USER"],
+        password=os.environ["DB_PASS"],
+        database=os.environ["DB_NAME"]
+    )
+    cursor = conn.cursor()
+
+    # --- CREACIÓN DE TABLAS SI NO EXISTEN ---
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS kpi_summary (
+            total_sales DECIMAL(12,2),
+            total_profit DECIMAL(12,2),
+            profit_margin DECIMAL(6,2),
+            avg_ship_time DECIMAL(6,2),
+            num_orders INT,
+            avg_discount DECIMAL(6,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales_by_category (
+            category VARCHAR(100),
+            total_sales DECIMAL(12,2),
+            total_profit DECIMAL(12,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales_by_month (
+            month VARCHAR(10),
+            total_sales DECIMAL(12,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS top_products (
+            product_name VARCHAR(200),
+            total_sales DECIMAL(12,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales_by_region (
+            region VARCHAR(50),
+            total_sales DECIMAL(15,2),
+            total_profit DECIMAL(15,2)
+        )
+    """)
+
+    # --- LIMPIAR Y ACTUALIZAR DATOS ---
+    # KPIs globales
+    cursor.execute("TRUNCATE TABLE kpi_summary")
+    cursor.execute("""
+        INSERT INTO kpi_summary
+        SELECT 
+            SUM(sales),
+            SUM(profit),
+            (SUM(profit)/SUM(sales))*100,
+            AVG(DATEDIFF(ship_date, order_date)),
+            COUNT(DISTINCT order_id),
+            AVG(discount)*100
+        FROM sales
+    """)
+
+    # Ventas por categoría
+    cursor.execute("TRUNCATE TABLE sales_by_category")
+    cursor.execute("""
+        INSERT INTO sales_by_category
+        SELECT category, SUM(sales), SUM(profit)
+        FROM sales
+        GROUP BY category
+    """)
+
+    # Ventas por mes
+    cursor.execute("TRUNCATE TABLE sales_by_month")
+    cursor.execute("""
+        INSERT INTO sales_by_month
+        SELECT DATE_FORMAT(order_date, '%Y-%m'), SUM(sales)
+        FROM sales
+        GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+    """)
+
+    # Top 10 productos
+    cursor.execute("TRUNCATE TABLE top_products")
+    cursor.execute("""
+        INSERT INTO top_products
+        SELECT product_name, SUM(sales)
+        FROM sales
+        GROUP BY product_name
+        ORDER BY SUM(sales) DESC
+        LIMIT 10
+    """)
+
+    # Ventas por región (nueva tabla)
+    cursor.execute("TRUNCATE TABLE sales_by_region")
+    cursor.execute("""
+        INSERT INTO sales_by_region (region, total_sales, total_profit)
+        SELECT 
+            region,
+            SUM(sales) AS total_sales,
+            SUM(profit) AS total_profit
+        FROM sales
+        GROUP BY region;
+    """)
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    print(" Tablas KPI actualizadas correctamente ")
+    return {"statusCode": 200, "body": "Tablas KPI actualizadas correctamente"}
+
+        
+        </code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔹 Lambda 4 -->
+  <div class="section">
+    <h2>Lambda 4 — Controlador Maestro del Pipeline</h2>
+    <p>Orquesta la ejecución completa (Clean → Create → Insert) utilizando EventBridge y llamadas internas.</p>
+    <div class="accordion">
+      <div class="accordion-header">Ver código Lambda Orchestrator <span>▼</span></div>
+      <div class="accordion-content">
+        <button class="copy-btn" onclick="copyCode('master')">Copiar</button>
+        <pre id="master"><code>
+
+import pymysql
+import os
+
+def lambda_handler(event, context):
+    conn = pymysql.connect(
+        host=os.environ["DB_HOST"],
+        user=os.environ["DB_USER"],
+        password=os.environ["DB_PASS"],
+        database=os.environ["DB_NAME"]
+    )
+    cursor = conn.cursor()
+
+    # --- CREACIÓN DE TABLAS SI NO EXISTEN ---
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS kpi_summary (
+            total_sales DECIMAL(12,2),
+            total_profit DECIMAL(12,2),
+            profit_margin DECIMAL(6,2),
+            avg_ship_time DECIMAL(6,2),
+            num_orders INT,
+            avg_discount DECIMAL(6,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales_by_category (
+            category VARCHAR(100),
+            total_sales DECIMAL(12,2),
+            total_profit DECIMAL(12,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales_by_month (
+            month VARCHAR(10),
+            total_sales DECIMAL(12,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS top_products (
+            product_name VARCHAR(200),
+            total_sales DECIMAL(12,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales_by_region (
+            region VARCHAR(50),
+            total_sales DECIMAL(15,2),
+            total_profit DECIMAL(15,2)
+        )
+    """)
+
+    # --- LIMPIAR Y ACTUALIZAR DATOS ---
+    # KPIs globales
+    cursor.execute("TRUNCATE TABLE kpi_summary")
+    cursor.execute("""
+        INSERT INTO kpi_summary
+        SELECT 
+            SUM(sales),
+            SUM(profit),
+            (SUM(profit)/SUM(sales))*100,
+            AVG(DATEDIFF(ship_date, order_date)),
+            COUNT(DISTINCT order_id),
+            AVG(discount)*100
+        FROM sales
+    """)
+
+    # Ventas por categoría
+    cursor.execute("TRUNCATE TABLE sales_by_category")
+    cursor.execute("""
+        INSERT INTO sales_by_category
+        SELECT category, SUM(sales), SUM(profit)
+        FROM sales
+        GROUP BY category
+    """)
+
+    # Ventas por mes
+    cursor.execute("TRUNCATE TABLE sales_by_month")
+    cursor.execute("""
+        INSERT INTO sales_by_month
+        SELECT DATE_FORMAT(order_date, '%Y-%m'), SUM(sales)
+        FROM sales
+        GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+    """)
+
+    # Top 10 productos
+    cursor.execute("TRUNCATE TABLE top_products")
+    cursor.execute("""
+        INSERT INTO top_products
+        SELECT product_name, SUM(sales)
+        FROM sales
+        GROUP BY product_name
+        ORDER BY SUM(sales) DESC
+        LIMIT 10
+    """)
+
+    # Ventas por región (nueva tabla)
+    cursor.execute("TRUNCATE TABLE sales_by_region")
+    cursor.execute("""
+        INSERT INTO sales_by_region (region, total_sales, total_profit)
+        SELECT 
+            region,
+            SUM(sales) AS total_sales,
+            SUM(profit) AS total_profit
+        FROM sales
+        GROUP BY region;
+    """)
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    print(" Tablas KPI actualizadas correctamente ")
+    return {"statusCode": 200, "body": "Tablas KPI actualizadas correctamente"}
+
+        
+        </code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔹 Dashboard -->
+  <div class="section">
+    <h2>Dashboard Streamlit — Visualización de KPIs</h2>
+    <p>Aplicación en Streamlit conectada a MySQL, mostrando KPIs y visualizaciones interactivas de ventas.</p>
+    <div class="accordion">
+      <div class="accordion-header">Ver código de la aplicación Streamlit <span>▼</span></div>
+      <div class="accordion-content">
+        <button class="copy-btn" onclick="copyCode('dash')">Copiar</button>
+        <pre id="dash"><code>
+
+import pymysql
+import os
+
+def lambda_handler(event, context):
+    conn = pymysql.connect(
+        host=os.environ["DB_HOST"],
+        user=os.environ["DB_USER"],
+        password=os.environ["DB_PASS"],
+        database=os.environ["DB_NAME"]
+    )
+    cursor = conn.cursor()
+
+    # --- CREACIÓN DE TABLAS SI NO EXISTEN ---
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS kpi_summary (
+            total_sales DECIMAL(12,2),
+            total_profit DECIMAL(12,2),
+            profit_margin DECIMAL(6,2),
+            avg_ship_time DECIMAL(6,2),
+            num_orders INT,
+            avg_discount DECIMAL(6,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales_by_category (
+            category VARCHAR(100),
+            total_sales DECIMAL(12,2),
+            total_profit DECIMAL(12,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales_by_month (
+            month VARCHAR(10),
+            total_sales DECIMAL(12,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS top_products (
+            product_name VARCHAR(200),
+            total_sales DECIMAL(12,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales_by_region (
+            region VARCHAR(50),
+            total_sales DECIMAL(15,2),
+            total_profit DECIMAL(15,2)
+        )
+    """)
+
+    # --- LIMPIAR Y ACTUALIZAR DATOS ---
+    # KPIs globales
+    cursor.execute("TRUNCATE TABLE kpi_summary")
+    cursor.execute("""
+        INSERT INTO kpi_summary
+        SELECT 
+            SUM(sales),
+            SUM(profit),
+            (SUM(profit)/SUM(sales))*100,
+            AVG(DATEDIFF(ship_date, order_date)),
+            COUNT(DISTINCT order_id),
+            AVG(discount)*100
+        FROM sales
+    """)
+
+    # Ventas por categoría
+    cursor.execute("TRUNCATE TABLE sales_by_category")
+    cursor.execute("""
+        INSERT INTO sales_by_category
+        SELECT category, SUM(sales), SUM(profit)
+        FROM sales
+        GROUP BY category
+    """)
+
+    # Ventas por mes
+    cursor.execute("TRUNCATE TABLE sales_by_month")
+    cursor.execute("""
+        INSERT INTO sales_by_month
+        SELECT DATE_FORMAT(order_date, '%Y-%m'), SUM(sales)
+        FROM sales
+        GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+    """)
+
+    # Top 10 productos
+    cursor.execute("TRUNCATE TABLE top_products")
+    cursor.execute("""
+        INSERT INTO top_products
+        SELECT product_name, SUM(sales)
+        FROM sales
+        GROUP BY product_name
+        ORDER BY SUM(sales) DESC
+        LIMIT 10
+    """)
+
+    # Ventas por región (nueva tabla)
+    cursor.execute("TRUNCATE TABLE sales_by_region")
+    cursor.execute("""
+        INSERT INTO sales_by_region (region, total_sales, total_profit)
+        SELECT 
+            region,
+            SUM(sales) AS total_sales,
+            SUM(profit) AS total_profit
+        FROM sales
+        GROUP BY region;
+    """)
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    print(" Tablas KPI actualizadas correctamente ")
+    return {"statusCode": 200, "body": "Tablas KPI actualizadas correctamente"}
+
+        
+        </code></pre>
+        <div class="diagram">
+          <img src="dashbor.png" alt="Dashboard Superstore">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Proyecto ETL Serverless | AWS | Streamlit | 2025</footer>
+
+  <script>
+    // Acordeón
+    document.querySelectorAll('.accordion-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const accordion = header.parentElement;
+        accordion.classList.toggle('active');
+        header.querySelector('span').textContent = accordion.classList.contains('active') ? '▲' : '▼';
+      });
+    });
+
+    // Copiar código
+    function copyCode(id) {
+      const code = document.getElementById(id).innerText;
+      navigator.clipboard.writeText(code);
+      alert("Código copiado al portapapeles");
+    }
+  </script>
+</body>
+</html>
+

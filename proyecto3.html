@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Proyecto 2 — Dashboard de Videojuegos Gratuitos</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Inter, sans-serif;
+      background: #0a0f12;
+      color: #e6eef6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h1 {
+      color: #9acd32;
+      text-align: center;
+    }
+    .content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 1200px;
+      margin-top: 20px;
+    }
+    pre {
+      background:#1a1f24;
+      color:#9acd32;
+      padding:10px;
+      border-radius:8px;
+      overflow:auto;
+      max-height:600px;
+    }
+    img {
+      max-width:100%;
+      border-radius:12px;
+      box-shadow:0 0 10px rgba(0,0,0,0.4);
+    }
+    .code-section, .screenshot-section {
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    a {
+      color:#9acd32;
+      text-decoration:none;
+      font-weight:bold;
+    }
+    a:hover {
+      text-decoration:underline;
+    }
+    @media(max-width:900px){
+      .content {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Proyecto 3 — Dashboard de Servidores </h1>
+
+  <div class="content">
+    <!-- Código Python -->
+    <div class="code-section">
+      <h3>Código Python</h3>
+      <pre><code>
+import boto3           # Conexión a AWS S3
+import pandas as pd     # Manipulación de datos
+import streamlit as st  # Interfaz web interactiva
+import plotly.express as px  # Visualización de datos moderna
+import json
+from io import StringIO
+
+
+# ==============================
+# CONFIGURACIÓN DE PÁGINA
+# ==============================
+st.set_page_config(
+    page_title="Estado de Servidores | Live Monitor",
+    layout="wide"
+)
+
+# ==============================
+# CARGA DE DATOS DESDE S3
+# ==============================
+@st.cache_data
+def cargar_datos():
+    s3 = boto3.client("s3")
+    bucket_name = "xideralaws-curso-benjamin2"
+    prefix = "raw/"
+    
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+    data_frames = []
+
+    if 'Contents' not in response:
+        return pd.DataFrame()
+
+    for obj in response["Contents"]:
+        key = obj["Key"]
+        if key.endswith(".json"):
+            file_obj = s3.get_object(Bucket=bucket_name, Key=key)
+            content = file_obj["Body"].read().decode("utf-8")
+            json_data = json.loads(content)
+            df_temp = pd.json_normalize(json_data)
+            data_frames.append(df_temp)
+
+    if not data_frames:
+        return pd.DataFrame()
+
+    df = pd.concat(data_frames, ignore_index=True)
+    df["timestamp"] = pd.to_datetime(df["timestamp"])
+    return df
+
+
+# ==============================
+# TÍTULO 
+# ==============================
+st.title("Estado de los Servidores")
+st.subheader("Rendimiento del sistema en tiempo real")
+
+# ==============================
+# CARGAR DATOS
+# ==============================
+df = cargar_datos()
+
+if df.empty:
+    st.warning("No se encontraron registros en el sistema.")
+    st.stop()
+
+# ==============================
+# FILTROS LATERALES
+# ==============================
+st.sidebar.header("Filtros de visualización")
+
+servers = sorted(df['server_id'].unique())
+statuses = sorted(df['status'].unique())
+
+server_filter = st.sidebar.multiselect("Seleccionar Servidor", options=servers, default=servers)
+status_filter = st.sidebar.multiselect("Seleccionar Estado", options=statuses, default=statuses)
+
+filtered = df[
+    (df['server_id'].isin(server_filter)) &
+    (df['status'].isin(status_filter))
+]
+
+# ==============================
+# MÉTRICAS PRINCIPALES
+# ==============================
+total_servidores = df['server_id'].nunique()
+total_registros = len(df)
+status_unicos = df['status'].nunique()
+
+col1, col2, col3 = st.columns(3)
+col1.metric("Servidores únicos", total_servidores)
+col2.metric("Total de registros", total_registros)
+col3.metric("Tipos de estado", status_unicos)
+
+# ==============================
+# GRÁFICAS PRINCIPALES
+# ==============================
+col1, col2 = st.columns(2)
+
+with col1:
+    conteo_estados = filtered.groupby(["server_id", "status"]).size().reset_index(name="count")
+
+    fig1 = px.bar(
+        conteo_estados,
+        x="server_id",
+        y="count",
+        color="status",
+        title="Estados por Servidor",
+        labels={"server_id": "Servidor", "count": "Cantidad", "status": "Estado"},
+        color_discrete_sequence=px.colors.qualitative.Prism  # Paleta personalizada
+    )
+    st.plotly_chart(fig1, use_container_width=True)
+
+with col2:
+    total_status_counts = filtered['status'].value_counts().reset_index()
+    total_status_counts.columns = ['status', 'count']
+
+    fig2 = px.pie(
+        total_status_counts,
+        names='status',
+        values='count',
+        title="Distribución de Estados",
+        color_discrete_sequence=px.colors.sequential.Mint
+    )
+    st.plotly_chart(fig2, use_container_width=True)
+
+# ==============================
+# TABLA DE DATOS
+# ==============================
+st.subheader("Registros recientes de monitoreo")
+st.dataframe(filtered.head(30), use_container_width=True)
+
+# ==============================
+# BOTÓN PARA ACTUALIZAR
+# ==============================
+st.markdown("---")
+if st.button("Actualizar"):
+    st.experimental_rerun()
+      </code></pre>
+      <a href="https://github.com/jorgeescobedo117/AWS-Data-Jorge/blob/main/servidor.py" target="_blank">
+        Ver código completo en GitHub
+      </a>
+    </div>
+
+    <!-- Captura de pantalla -->
+    <div class="screenshot-section">
+      <h3>Captura del Dashboard</h3>
+      <img src="servidores.png" alt="Captura del Dashboard">
+       <h3>Captura del Kernel</h3>
+      <img src="kernelServer.png" alt="Captura del Kernel">
+    </div>
+  </div>
+   <div style="text-align:center; margin-top:40px;">
+  <a href="index.html" style="
+    background-color:9acd32;
+    color:white;
+    text-shadow: 0 0 3px #9acd32;
+    padding:10px 20px;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:bold;
+    transition: background-color 0.2s ease;">
+     Volver al inicio :D 
+  </a>
+</div>
+</body>
+</html>

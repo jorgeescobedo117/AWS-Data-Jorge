@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Jorge Escobedo Medina — Portafolio</title>
+  <style>
+    :root{
+      --accent:#6b8e23; 
+      --bg:#101418; 
+      --card:#1a1f24;
+      --muted:#9ca3af;
+      --chief:#117117;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Orbitron, Inter, system-ui, sans-serif;
+      background:linear-gradient(180deg,#0a0f12 0%,#1a1f24 100%);
+      color:#e6eef6;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .container{width:100%;max-width:980px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+    .brand{display:flex;gap:16px;align-items:center}
+    .avatar{
+      width:64px;height:64px;border-radius:12px;
+      background:linear-gradient(135deg,var(--accent),#3a4c3a);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;color:#0a0f0a;text-shadow:0 0 3px #9acd32;
+    }
+    h1{font-size:28px;margin:0;font-family:Orbitron, sans-serif;letter-spacing:1px;}
+    p.lead{margin:4px 0 0;color:var(--muted)}
+    nav{display:flex;gap:8px}
+    a.btn, button.btn{
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.08);
+      padding:10px 14px;
+      border-radius:10px;
+      color:inherit;
+      text-decoration:none;
+      font-weight:600;
+      transition:all .18s;
+      cursor:pointer;
+    }
+    a.btn:hover, button.btn:hover{
+      transform:translateY(-3px);
+      box-shadow:0 0 12px var(--accent);
+      border-color:var(--accent);
+      color:var(--accent);
+    }
+
+    /* ====== NUEVO: menú desplegable ====== */
+/* ====== MENÚ DESPLEGABLE CON SCROLL INTERNO ====== */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%; /* justo debajo del botón */
+  left: 0;
+  background-color: var(--card);
+  min-width: 200px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  padding: 6px 0;
+  z-index: 1000;
+
+  /* Mostrar máximo 6 elementos (altura aprox 6x40px = 240px) */
+  max-height: 220px;
+  overflow-y: auto; /* Scroll interno */
+}
+
+/* Scroll elegante */
+.dropdown-content::-webkit-scrollbar {
+  width: 6px;
+}
+.dropdown-content::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+.dropdown-content::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.dropdown-content a {
+  color: #e6eef6;
+  padding: 10px 16px;
+  text-decoration: none;
+  display: block;
+  transition: background 0.2s, color 0.2s;
+}
+
+.dropdown-content a:hover {
+  background-color: rgba(255,255,255,0.08);
+  color: var(--accent);
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+
+    .hero{
+      background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);
+      padding:22px;border-radius:14px;
+      border:1px solid rgba(255,255,255,0.04);
+      display:flex;gap:20px;align-items:center;
+    }
+    .hero .left{flex:1}
+    .hero h2{margin:0 0 8px;font-size:22px;color:#d0d6d8}
+    .hero p{margin:0;color:var(--muted)}
+    .actions{margin-top:14px;display:flex;gap:10px}
+    .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:18px}
+    .card{
+      background:var(--card);
+      padding:14px;border-radius:12px;
+      border:1px solid rgba(255,255,255,0.03);
+      color: inherit; 
+      text-decoration: none;
+      transition:transform .2s,border-color .2s, box-shadow .2s;
+    }
+    .card:hover{
+      transform:translateY(-2px);
+      border-color:var(--accent);
+      box-shadow:0 0 8px rgba(107,142,35,0.6);
+    }
+    .card h3{margin:0 0 8px;font-size:16px;color:#e6eef6}
+    .card p{margin:0;color:var(--muted);font-size:14px}
+    .tag{
+      display:inline-block;
+      background:rgba(107,142,35,0.2);
+      color:var(--accent);
+      padding:2px 8px;border-radius:4px;
+      font-size:12px;margin-top:8px;
+    }
+    footer{margin-top:18px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+    .socials{display:flex;gap:8px}
+    .link-small{font-size:13px;color:var(--muted);text-decoration:none;transition:color .2s}
+    .link-small:hover{color:var(--accent)}
+    @media (max-width:640px){
+      header{flex-direction:column;align-items:flex-start;gap:12px}
+      .brand{width:100%;justify-content:space-between}
+      .hero{flex-direction:column;align-items:flex-start}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="avatar">JE</div>
+        <div>
+          <h1>Jorge Escobedo Medina</h1>
+        </div>
+      </div>
+
+      <nav aria-label="Navegación principal">
+        <div class="dropdown">
+          <button class="btn">Cursos</button>
+          <div class="dropdown-content">
+            <a href="mindset.png">Getting into the serverless</a>
+            <a href="complete_aws_found.png">AWS WELL- Architected</a>
+            <a href="complete_aws.png">AWS Cloud Practitioner Essentials</a>
+          </div>
+        </div>
+        
+        <div class="dropdown">
+          <button class="btn">Actividades en clase</button>
+          <div class="dropdown-content">
+            <a href="Ejercicios.html">Actividad 1: Introducción a Python </a>
+            <a href="Netflix.html">Actividad 2: Análisis de Datos de Netflix</a>
+            <a href="Vocales.html">Actividad 3: Conteo de vocales</a>
+            <a href="Proyecto1.html">Actividad 4: Proyecto RickyandMorty</a>
+             <a href="dashboardNetflix.png">Actividad 5: Dashboard NetFlix</a>
+          </div>
+        </div>
+
+        <div class="dropdown">
+          <button class="btn">Tareas</button>
+          <div class="dropdown-content">
+            <a href="https://github.com/jorgeescobedo117/AWS-Data-Jorge/blob/main/README.md">Tarea 1: README Documentado e Investigacion de scp</a>
+            <a href="Datasets_Steamx.html">Tarea 2: Datasets Steam</a>
+            <a href="captura.pdf">Tarea 3: Captura de Pantalla CodeCombat</a>
+            <a href="Proyecto2.html">Tarea 4: Proyecto 2 — Dashboard de Videojuegos </a>
+            <a href="proyecto3.html">Tarea 5: Servidores OK ,ERROR WARNING</a>
+            <a href="tarea6.html">Tarea 6: Transformacion de datos con Lambdas</a>
+             <a href="DiagramaAWS.png">Tarea 7: Diagrama AWS ETL</a>
+            <a href="Proyecto4.html">Tarea 8: Extracción de datos de base de datos con AWS Lambda</a>
+             <a href="Contraseña.html">Tarea 9: Extracción de datos segura sin contraseñas </a>
+            
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <section id="inicio" class="hero" aria-labelledby="titulo-inicio">
+      <div class="left">
+        <h2 id="titulo-inicio">¡Hola! Soy Jorge</h2>
+        <p>Bienvenido a mi portafolio académico.</p>
+      </div>
+    </section>
+    
+
+    <section id="proyectos" style="margin-top:30px">
+      <h2 style="margin:0 0 8px">Proyectos</h2>
+      <div class="card-grid">
+        <a href="Proyecto1.html" class="card">
+          <h3>Proyecto 1-RickAndMorty</h3>
+          <p>Código y Vista Previa del Dashboard</p>
+          <div class="tag">Proyecto 1</div>
+        </a>
+        <a href="Proyecto2.html" class="card">
+          <h3>Proyecto 2 — Dashboard de Videojuegos Gratuitos</h3>
+          <p>Código y Vista Previa del Dashboard</p>
+          <div class="tag">Proyecto 2</div>
+        </a>
+        <a href="proyecto3.html" class="card">
+          <h3>Proyecto 3 — Servidores</h3>
+          <p>Servidores OK ,ERROR WARNING</p>
+          <div class="tag">Proyecto 3</div>
+        </a>
+         <a href="Proyecto4.html" class="card">
+          <h3>Proyecto 4 — Extracción de datos de base de datos con AWS Lambda </h3>
+          <p>Backup automatizado con Lambda y S3</p>
+          <div class="tag">Proyecto 4</div>
+        </a>
+        <a href="Final.html" class="card">
+  <h3> Proyecto FINAL</h3>
+  <p> Pipeline ETL Serverless (AWS Lambda)</p>
+  <div class="tag">final</div>
+      </a>
+      </div>
+    </section>
+
+    <footer>
+      <div><span id="year"></span></div>
+      <div class="socials">
+        <a class="link-small" href="https://github.com/jorgeescobedo117/AWS-Data-Jorge/blob/main/README.md" target="_blank">README GITHUB</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

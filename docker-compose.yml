@@ -1,6 +1,21 @@
 version: "3.9"
+<<<<<<< HEAD
 services:
   dashboard:
     build: .
     ports:
       - "8501:8501"
+=======
+
+services:
+  streamlit-app:
+    build: .
+    container_name: streamlit_app
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env     # Carga tus secrets desde .env
+    restart: unless-stopped
+
+ 
+>>>>>>> 506eb6f8276f6d15694c089f50db5a4df4e6a817
