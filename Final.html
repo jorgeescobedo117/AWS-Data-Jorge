@@ -137,7 +137,7 @@
     <h2> Arquitectura General ETL</h2>
     <p>Flujo completo desde la extracción de datos en <strong>S3</strong> hasta la visualización de KPIs en <strong>Streamlit</strong>.</p>
     <div class="diagram">
-      <img src="data:image/png;base64,{{tu_diagrama_base64}}" alt="Diagrama ETL AWS">
+      <img src="Diagram.png" alt="Diagrama ETL AWS">
     </div>
   </div>
 
@@ -431,9 +431,9 @@ def lambda_handler(event, context):
   </div>
 
   
-   <!-- Sección 5: Controlador del Flujo de Datos Serverless (Clean → Create → Insert) -->
+   
   <div class="section">
-    <h2> Lambda 4 — Generación de KPIs (Update)</h2>
+    <h2> Lambda 5 — Controlador del Flujo de Datos Serverless (Clean → Create → Insert) --> </h2>
     <p> Esta Lambda actúa como punto de entrada principal del pipeline.</p>
     <div class="accordion">
       <div class="accordion-header">Ver código Lambda  <span>▼</span></div>
@@ -688,7 +688,7 @@ except Exception as e:
 
         </code></pre>
     <div class="diagram">
-      <img src="data:image/png;base64,{{tu_captura_dashboard}}" alt="Dashboard Superstore">
+      <img src="dashbord.png" alt="Dashboard Superstore">
     </div>
   </div>
 
