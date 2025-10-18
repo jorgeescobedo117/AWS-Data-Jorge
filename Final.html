@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Proyecto ETL Serverless — AWS Superstore</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: #0a0f12;
+      color: #e6eef6;
+      padding: 20px;
+    }
+    h1, h2, h3 {
+      color: #9acd32;
+      text-align: center;
+    }
+    h1 { font-size: 2.5rem; margin-top: 10px; }
+    .intro {
+      max-width: 1000px;
+      margin: 20px auto;
+      background: #11181c;
+      border-radius: 14px;
+      padding: 20px;
+      line-height: 1.7;
+      color: #b0b8c0;
+      box-shadow: 0 0 25px rgba(0,255,0,0.05);
+    }
+    .intro strong { color: #9acd32; }
+    .section {
+      background: #11181c;
+      border: 1px solid #1c252b;
+      border-radius: 14px;
+      padding: 20px;
+      margin: 30px auto;
+      max-width: 1000px;
+      box-shadow: 0 0 25px rgba(0,255,0,0.05);
+    }
+    .section:hover {
+      box-shadow: 0 0 30px rgba(154,205,50,0.2);
+      transition: 0.3s;
+    }
+    p { color: #b0b8c0; line-height: 1.6; }
+    .diagram {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .diagram img {
+      max-width: 90%;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(154,205,50,0.3);
+    }
+    .accordion {
+      background: #1a1f24;
+      border-radius: 10px;
+      margin-top: 10px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .accordion-header {
+      background: #12171a;
+      cursor: pointer;
+      padding: 14px 20px;
+      color: #9acd32;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .accordion-header:hover {
+      background: #151c20;
+    }
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.4s ease;
+    }
+    .accordion.active .accordion-content {
+      max-height: 1000px;
+      padding: 10px 20px;
+    }
+    pre {
+      background: #0f1418;
+      color: #9acd32;
+      padding: 12px;
+      border-radius: 10px;
+      overflow-x: auto;
+      max-height: 500px;
+    }
+    button.copy-btn {
+      background: none;
+      border: 1px solid #9acd32;
+      color: #9acd32;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    button.copy-btn:hover {
+      background: #9acd32;
+      color: #0a0f12;
+    }
+    footer {
+      text-align: center;
+      margin: 40px 0;
+      color: #9acd32;
+      font-weight: bold;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    .section, .intro { animation: fadeIn 0.8s ease; }
+  </style>
+</head>
+<body>
+  <h1> Proyecto ETL  — Superstore AWS</h1>
+
+  <div class="intro">
+    <p>
+      Este diagrama representa una arquitectura <strong>Extract, Transform, Load (ETL)</strong> completamente <strong>serverless</strong> utilizando los servicios de <strong>Amazon Web Services (AWS)</strong>.
+      El objetivo es tomar datos de un origen externo (<strong>Kaggle</strong>), procesarlos en etapas y almacenarlos en una base de datos relacional final (<strong>RDS/MySQL</strong>) para su posterior visualización.
+    </p>
+    <p><strong>El flujo se divide en tres fases principales:</strong></p>
+    <ul>
+      <li><strong>Extracción y Almacenamiento RAW:</strong> Los datos de Kaggle se ingieren y se almacenan en un <strong>Bucket S3 (RAW)</strong>, que actúa como lago de datos inicial.</li>
+      <li><strong>Limpieza y Transformación:</strong> Una primera <strong>AWS Lambda (L1)</strong> limpia y transforma los datos, guardando los resultados en un <strong>Bucket S3 (Procesado)</strong>.</li>
+      <li><strong>Carga y Base de Datos:</strong> Una segunda <strong>AWS Lambda (L2)</strong> toma los datos procesados y los carga a <strong>RDS (MySQL)</strong>. Además, una <strong>L3</strong> gestiona la creación de tablas.</li>
+      <li><strong>Visualización:</strong> Finalmente, los datos estructurados son consumidos por una herramienta de <strong>visualización (Streamlit / Bismart)</strong> para generar dashboards dinámicos.</li>
+    </ul>
+  </div>
+
+  <!-- Sección 1: Diagrama General -->
+  <div class="section">
+    <h2> Arquitectura General ETL</h2>
+    <p>Flujo completo desde la extracción de datos en <strong>S3</strong> hasta la visualización de KPIs en <strong>Streamlit</strong>.</p>
+    <div class="diagram">
+      <img src="data:image/png;base64,{{tu_diagrama_base64}}" alt="Diagrama ETL AWS">
+    </div>
+  </div>
+
+  <!-- Sección 2: Lambda Limpieza -->
+  <div class="section">
+    <h2> Lambda 1 — Limpieza de Datos (Clean)</h2>
+    <p>Lee el CSV desde S3, normaliza nombres de columnas, elimina nulos y guarda un parquet limpio en S3.</p>
+    <div class="accordion">
+      <div class="accordion-header">Ver código Lambda Clean <span>▼</span></div>
+      <div class="accordion-content">
+        <button class="copy-btn" onclick="copyCode('clean-code')">Copiar</button>
+        <pre id="clean-code"><code>
+import boto3
+import pandas as pd
+import io
+import os
+import re
+from datetime import datetime
+
+s3 = boto3.client("s3")
+
+def sanitize_column(name):
+    """Normaliza los nombres de columnas para evitar errores en SQL."""
+    name = name.strip().lower()
+    name = re.sub(r"[^0-9a-zA-Z_]", "_", name)
+    return name
+
+def lambda_handler(event, context):
+    # Variables de entorno
+    bucket = os.environ["BUCKET"]
+    raw_key = os.environ["RAW_KEY"]
+
+    # Leer CSV desde S3
+    obj = s3.get_object(Bucket=bucket, Key=raw_key)
+    csv_bytes = obj["Body"].read()
+
+    try:
+        df = pd.read_csv(io.BytesIO(csv_bytes), encoding="utf-8")
+    except UnicodeDecodeError:
+        df = pd.read_csv(io.BytesIO(csv_bytes), encoding="latin1")
+
+    # ===============================
+    # LIMPIEZA BÁSICA
+    # ===============================
+    # Normalizar nombres de columnas
+    df.columns = [sanitize_column(c) for c in df.columns]
+
+    # Eliminar filas completamente vacías
+    df = df.dropna(how="all")
+
+    # Eliminar la columna 'row_id' si existe
+    if "row_id" in df.columns:
+        df = df.drop(columns=["row_id"])
+        print(" Columna 'row_id' eliminada del dataset.")
+
+    # Convertir fechas
+    for col in ["order_date", "ship_date"]:
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors="coerce")
+
+    # ===============================
+    # GUARDAR ARCHIVO PROCESADO
+    # ===============================
+    now = datetime.now().strftime("%Y%m%d_%H%M%S")
+    processed_key = f"processed/superstore_{now}.parquet"
+
+    parquet_buffer = io.BytesIO()
+    df.to_parquet(parquet_buffer, index=False, compression="snappy")
+
+    s3.put_object(Bucket=bucket, Key=processed_key, Body=parquet_buffer.getvalue())
+
+    return {
+        "statusCode": 200,
+        "body": f" Archivo limpio guardado en s3://{bucket}/{processed_key} ({len(df)} filas, {len(df.columns)} columnas)"
+    }
+
+        </code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección 3: Lambda Inserción -->
+  <div class="section">
+    <h2> Lambda 2 — Inserción en MySQL (Insert)</h2>
+    <p>Lee el archivo Parquet procesado desde S3, crea la base de datos si no existe e inserta los registros en RDS MySQL.</p>
+    <div class="accordion">
+      <div class="accordion-header">Ver código Lambda Insert <span>▼</span></div>
+      <div class="accordion-content">
+        <button class="copy-btn" onclick="copyCode('insert-code')">Copiar</button>
+        <pre id="insert-code"><code>
+import boto3
+import pandas as pd
+import pymysql
+import io
+import os
+
+s3 = boto3.client("s3")
+
+def lambda_handler(event, context):
+    # Variables de entorno
+    bucket = os.environ["BUCKET"]
+    key = os.environ["PROCESSED_KEY"]
+    db_host = os.environ["DB_HOST"]
+    db_user = os.environ["DB_USER"]
+    db_pass = os.environ["DB_PASS"]
+    db_name = os.environ.get("DB_NAME", "superstore")
+
+    # Leer Parquet desde S3
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    df = pd.read_parquet(io.BytesIO(obj["Body"].read()))
+
+    # Conexión MySQL
+    conn = pymysql.connect(host=db_host, user=db_user, password=db_pass)
+    cursor = conn.cursor()
+    cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
+    conn.select_db(db_name)
+
+    # Crear tabla base
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales (
+            order_id VARCHAR(50),
+            order_date DATETIME,
+            ship_date DATETIME,
+            ship_mode VARCHAR(100),
+            customer_id VARCHAR(50),
+            customer_name VARCHAR(100),
+            segment VARCHAR(100),
+            country VARCHAR(100),
+            city VARCHAR(100),
+            state VARCHAR(100),
+            postal_code VARCHAR(20),
+            region VARCHAR(100),
+            product_id VARCHAR(50),
+            category VARCHAR(100),
+            sub_category VARCHAR(100),
+            product_name VARCHAR(200),
+            sales DECIMAL(12,2),
+            quantity INT,
+            discount DECIMAL(6,4),
+            profit DECIMAL(12,2)
+        )
+    """)
+
+    # Insertar datos
+    placeholders = ", ".join(["%s"] * len(df.columns))
+    cols = ", ".join([f"`{c}`" for c in df.columns])
+    sql = f"INSERT INTO sales ({cols}) VALUES ({placeholders})"
+    data = [tuple(x) for x in df.to_numpy()]
+    cursor.executemany(sql, data)
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    return {"statusCode": 200, "body": f"Datos insertados: {len(df)} registros"}
+
+        </code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección 4: Lambda KPIs -->
+  <div class="section">
+    <h2> Lambda 3 — Generación de KPIs (Update)</h2>
+    <p>Calcula métricas clave: ventas totales, margen promedio, top productos y rendimiento regional. Crea tablas resumen en la BD.</p>
+    <div class="accordion">
+      <div class="accordion-header">Ver código Lambda KPIs <span>▼</span></div>
+      <div class="accordion-content">
+        <button class="copy-btn" onclick="copyCode('kpi-code')">Copiar</button>
+        <pre id="kpi-code"><code>
+import pymysql
+import os
+
+def lambda_handler(event, context):
+    conn = pymysql.connect(
+        host=os.environ["DB_HOST"],
+        user=os.environ["DB_USER"],
+        password=os.environ["DB_PASS"],
+        database=os.environ["DB_NAME"]
+    )
+    cursor = conn.cursor()
+
+    # --- CREACIÓN DE TABLAS SI NO EXISTEN ---
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS kpi_summary (
+            total_sales DECIMAL(12,2),
+            total_profit DECIMAL(12,2),
+            profit_margin DECIMAL(6,2),
+            avg_ship_time DECIMAL(6,2),
+            num_orders INT,
+            avg_discount DECIMAL(6,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales_by_category (
+            category VARCHAR(100),
+            total_sales DECIMAL(12,2),
+            total_profit DECIMAL(12,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales_by_month (
+            month VARCHAR(10),
+            total_sales DECIMAL(12,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS top_products (
+            product_name VARCHAR(200),
+            total_sales DECIMAL(12,2)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales_by_region (
+            region VARCHAR(50),
+            total_sales DECIMAL(15,2),
+            total_profit DECIMAL(15,2)
+        )
+    """)
+
+    # --- LIMPIAR Y ACTUALIZAR DATOS ---
+    # KPIs globales
+    cursor.execute("TRUNCATE TABLE kpi_summary")
+    cursor.execute("""
+        INSERT INTO kpi_summary
+        SELECT 
+            SUM(sales),
+            SUM(profit),
+            (SUM(profit)/SUM(sales))*100,
+            AVG(DATEDIFF(ship_date, order_date)),
+            COUNT(DISTINCT order_id),
+            AVG(discount)*100
+        FROM sales
+    """)
+
+    # Ventas por categoría
+    cursor.execute("TRUNCATE TABLE sales_by_category")
+    cursor.execute("""
+        INSERT INTO sales_by_category
+        SELECT category, SUM(sales), SUM(profit)
+        FROM sales
+        GROUP BY category
+    """)
+
+    # Ventas por mes
+    cursor.execute("TRUNCATE TABLE sales_by_month")
+    cursor.execute("""
+        INSERT INTO sales_by_month
+        SELECT DATE_FORMAT(order_date, '%Y-%m'), SUM(sales)
+        FROM sales
+        GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+    """)
+
+    # Top 10 productos
+    cursor.execute("TRUNCATE TABLE top_products")
+    cursor.execute("""
+        INSERT INTO top_products
+        SELECT product_name, SUM(sales)
+        FROM sales
+        GROUP BY product_name
+        ORDER BY SUM(sales) DESC
+        LIMIT 10
+    """)
+
+    # Ventas por región (nueva tabla)
+    cursor.execute("TRUNCATE TABLE sales_by_region")
+    cursor.execute("""
+        INSERT INTO sales_by_region (region, total_sales, total_profit)
+        SELECT 
+            region,
+            SUM(sales) AS total_sales,
+            SUM(profit) AS total_profit
+        FROM sales
+        GROUP BY region;
+    """)
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    print(" Tablas KPI actualizadas correctamente ")
+    return {"statusCode": 200, "body": "Tablas KPI actualizadas correctamente"}
+
+        </code></pre>
+      </div>
+    </div>
+  </div>
+
+  
+   <!-- Sección 5: Controlador del Flujo de Datos Serverless (Clean → Create → Insert) -->
+  <div class="section">
+    <h2> Lambda 4 — Generación de KPIs (Update)</h2>
+    <p> Esta Lambda actúa como punto de entrada principal del pipeline.</p>
+    <div class="accordion">
+      <div class="accordion-header">Ver código Lambda  <span>▼</span></div>
+      <div class="accordion-content">
+        <button class="copy-btn" onclick="copyCode('kpi-code')">Copiar</button>
+        <pre id="kpi-code"><code>
+import json
+import lambda_clean_data
+import lambda_insert_data
+import lambda_update_kpis  # Este sería tu LAMBDA 2 (creación de base y tablas)
+
+def lambda_handler(event, context):
+    """
+    Lambda maestro que ejecuta diferentes procesos según el parámetro 'action'.
+    - clean  → Limpieza y procesamiento de datos
+    - create → Creación de base y tablas
+    - insert → Inserción de datos procesados
+    """
+
+    try:
+        action = event.get("action")
+
+        if not action:
+            return {
+                "statusCode": 400,
+                "body": json.dumps({
+                    "error": "Falta el parámetro 'action'. Usa: clean, create o insert."
+                })
+            }
+
+        # --- Llamadas a cada Lambda ---
+        if action == "clean":
+            print("🧹 Ejecutando limpieza de datos...")
+            result = lambda_clean_data.lambda_handler(event, context)
+
+        elif action == "create":
+            print("🧱 Creando base de datos y tablas...")
+            result = lambda_update_kpis.lambda_handler(event, context)
+
+        elif action == "insert":
+            print("💾 Insertando datos limpios en base...")
+            result = lambda_insert_data.lambda_handler(event, context)
+
+        else:
+            return {
+                "statusCode": 400,
+                "body": json.dumps({
+                    "error": f"Acción '{action}' no reconocida. Usa: clean, create o insert."
+                })
+            }
+
+        # --- Respuesta estándar ---
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "message": f"Proceso '{action}' ejecutado correctamente.",
+                "result": result
+            })
+        }
+
+    except Exception as e:
+        print(f"❌ Error en main: {str(e)}")
+        return {
+            "statusCode": 500,
+            "body": json.dumps({
+                "error": str(e)
+            })
+        }
+
+
+        </code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección 6: Dashboard -->
+  <div class="section">
+    <h2> Streamlit Dashboard — Visualización</h2>
+    <p>Dashboard interactivo que muestra KPIs y tendencias desde MySQL, con gráficos de ventas por categoría, margen por región y top productos.</p>
+       <div class="accordion">
+      <div class="accordion-header">Ver código de la aplicacion <span>▼</span></div>
+      <div class="accordion-content">
+        <button class="copy-btn" onclick="copyCode('kpi-code')">Copiar</button>
+        <pre id="kpi-code"><code>
+        
+# SUPERSTORE DASHBOARD - STREAMLIT + MYSQL + PLOTLY
+
+
+import streamlit as st
+import pandas as pd
+import pymysql
+import plotly.express as px
+import os
+from dotenv import load_dotenv
+
+# ==========================================================
+# CONFIGURACIÓN INICIAL
+# ==========================================================
+st.set_page_config(page_title="Superstore Dashboard", layout="wide")
+
+# Carga de variables del entorno (.env)
+load_dotenv("Enviorenment.env")
+
+# ==========================================================
+# CONEXIÓN A MYSQL
+# ==========================================================
+@st.cache_data
+def get_data(table: str) -> pd.DataFrame:
+    """Obtiene los datos de una tabla MySQL como DataFrame."""
+    conn = pymysql.connect(
+        host=os.getenv("DB_HOST"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASS"),
+        database=os.getenv("DB_NAME")
+    )
+    df = pd.read_sql(f"SELECT * FROM {table}", conn)
+    conn.close()
+    return df
+
+# ==========================================================
+# TÍTULO PRINCIPAL Y DESCRIPCIÓN
+# ==========================================================
+st.title("Superstore Dashboard - KPIs y Análisis de Ventas")
+# ==========================================================
+# SECCIÓN DE KPIs PRINCIPALES
+# ==========================================================
+try:
+    df_kpi = get_data("kpi_summary").iloc[0]
+
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    col1.metric("Ventas Totales", f"${df_kpi['total_sales']:,.2f}")
+    col2.metric("Beneficio Total", f"${df_kpi['total_profit']:,.2f}")
+    col3.metric("Margen de Beneficio", f"{df_kpi['profit_margin']:.2f}%")
+    col4.metric("Pedidos Únicos", f"{df_kpi['num_orders']:,}")
+    col5.metric("Tiempo Prom. Envío", f"{df_kpi['avg_ship_time']:.1f} días")
+    col6.metric("Descuento Prom.", f"{df_kpi['avg_discount']:.2f}%")
+
+except Exception as e:
+    st.error(f"Error al cargar los KPIs: {e}")
+
+# ==========================================================
+# GRÁFICO 1: VENTAS Y BENEFICIO POR CATEGORÍA
+# ==========================================================
+st.subheader("Ventas y Beneficio por Categoría")
+try:
+    df_cat = get_data("sales_by_category")
+
+    fig_cat = px.bar(
+        df_cat,
+        x="category",
+        y="total_sales",
+        color="total_profit",
+        text_auto=".2s",
+        color_continuous_scale="Blues"
+    )
+    fig_cat.update_layout(
+        xaxis_title="Categoría",
+        yaxis_title="Ventas ($)",
+        plot_bgcolor="white",
+        paper_bgcolor="white"
+    )
+    st.plotly_chart(fig_cat, use_container_width=True)
+except Exception as e:
+    st.warning(f"No se pudo cargar la información de categorías: {e}")
+
+# ==========================================================
+# GRÁFICO 2: TENDENCIA MENSUAL DE VENTAS
+# ==========================================================
+st.subheader("Tendencia Mensual de Ventas Totales")
+
+try:
+    df_month = get_data("sales_by_month")
+
+    # Convertir columna 'month' y ordenar cronológicamente
+    df_month["month"] = pd.to_datetime(df_month["month"], errors="coerce")
+    df_month = df_month.sort_values("month")
+
+    # Crear gráfico de línea con estilo moderno
+    fig_trend = px.line(
+        df_month,
+        x="month",
+        y="total_sales",
+        markers=True,
+        line_shape="spline"
+    )
+
+    # Estilo visual del gráfico
+    fig_trend.update_traces(
+        line=dict(width=4, color="#1f77b4"),
+        marker=dict(size=9, color="#ff7f0e", line=dict(width=1.5, color="white")),
+        fill='tozeroy',
+        fillcolor='rgba(63, 136, 197, 0.1)'
+    )
+
+    fig_trend.update_layout(
+        xaxis=dict(title="Mes", tickformat="%b %Y", showgrid=True, gridcolor="rgba(200,200,200,0.2)"),
+        yaxis=dict(title="Ventas Totales ($)", showgrid=True, gridcolor="rgba(200,200,200,0.2)"),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        hovermode="x unified",
+        font=dict(size=13, color="#222")
+    )
+
+    st.plotly_chart(fig_trend, use_container_width=True)
+
+except Exception as e:
+    st.warning(f"No se pudo cargar la tendencia mensual: {e}")
+
+# ==========================================================
+# GRÁFICO 3: TOP 10 PRODUCTOS POR VENTAS
+# ==========================================================
+st.subheader("Top 10 Productos por Ventas")
+try:
+    df_top = get_data("top_products")
+
+    fig_top = px.bar(
+        df_top,
+        y="product_name",
+        x="total_sales",
+        orientation="h",
+        text_auto=".2s",
+        color="total_sales",
+        color_continuous_scale="Viridis"
+    )
+    fig_top.update_layout(
+        yaxis={"categoryorder": "total ascending"},
+        plot_bgcolor="white",
+        paper_bgcolor="white"
+    )
+    st.plotly_chart(fig_top, use_container_width=True)
+except Exception as e:
+    st.warning(f"No se pudo cargar el top de productos: {e}")
+
+# ==========================================================
+# GRÁFICO 4: DISTRIBUCIÓN DE VENTAS POR REGIÓN
+# ==========================================================
+st.subheader("Distribución de Ventas por Región")
+try:
+    df_region = get_data("sales_by_region")
+
+    fig_pie = px.pie(
+        df_region,
+        names="region",
+        values="total_sales",
+        hole=0.45,
+        color_discrete_sequence=px.colors.qualitative.Set3
+    )
+    fig_pie.update_traces(textinfo="percent+label", pull=[0.05]*len(df_region))
+    st.plotly_chart(fig_pie, use_container_width=True)
+except Exception as e:
+    st.warning(f"No se pudo cargar la distribución por región: {e}")
+
+        </code></pre>
+    <div class="diagram">
+      <img src="data:image/png;base64,{{tu_captura_dashboard}}" alt="Dashboard Superstore">
+    </div>
+  </div>
+
+  <footer> Proyecto ETL Serverless | AWS | Streamlit | 2025</footer>
+
+  <script>
+    // Acordeón
+    document.querySelectorAll('.accordion-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const accordion = header.parentElement;
+        accordion.classList.toggle('active');
+        header.querySelector('span').textContent = accordion.classList.contains('active') ? '▲' : '▼';
+      });
+    });
+    // Copiar código
+    function copyCode(id) {
+      const code = document.getElementById(id).innerText;
+      navigator.clipboard.writeText(code);
+      alert(" Código copiado al portapapeles");
+    }
+  </script>
+</body>
+</html>
