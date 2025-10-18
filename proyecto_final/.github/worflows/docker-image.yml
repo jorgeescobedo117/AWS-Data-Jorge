@@ -26,3 +26,25 @@ jobs:
       with:
         push: true
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/proyecto_final:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: SSH to EC2 and update container
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          docker stop proyecto_final || true
+          docker rm proyecto_final || true
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/proyecto_final:latest
+          docker run -d -p 8501:8501 --name proyecto_final \
+            -e DB_HOST=${{ secrets.DB_HOST }} \
+            -e DB_USER=${{ secrets.DB_USER }} \
+            -e DB_PASS=${{ secrets.DB_PASS }} \
+            -e DB_NAME=${{ secrets.DB_NAME }} \
+            ${{ secrets.DOCKERHUB_USERNAME }}/proyecto_final:latest
