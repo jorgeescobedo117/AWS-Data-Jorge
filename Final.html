@@ -443,7 +443,7 @@ def lambda_handler(event, context):
 import json
 import lambda_clean_data
 import lambda_insert_data
-import lambda_update_kpis  # Este sería tu LAMBDA 2 (creación de base y tablas)
+import lambda_update_kpis   (creación de base y tablas)
 
 def lambda_handler(event, context):
     """
@@ -466,15 +466,15 @@ def lambda_handler(event, context):
 
         # --- Llamadas a cada Lambda ---
         if action == "clean":
-            print("🧹 Ejecutando limpieza de datos...")
+            print(" Ejecutando limpieza de datos...")
             result = lambda_clean_data.lambda_handler(event, context)
 
         elif action == "create":
-            print("🧱 Creando base de datos y tablas...")
+            print(" Creando base de datos y tablas...")
             result = lambda_update_kpis.lambda_handler(event, context)
 
         elif action == "insert":
-            print("💾 Insertando datos limpios en base...")
+            print(" Insertando datos limpios en base...")
             result = lambda_insert_data.lambda_handler(event, context)
 
         else:
@@ -495,7 +495,7 @@ def lambda_handler(event, context):
         }
 
     except Exception as e:
-        print(f"❌ Error en main: {str(e)}")
+        print(f" Error en main: {str(e)}")
         return {
             "statusCode": 500,
             "body": json.dumps({
