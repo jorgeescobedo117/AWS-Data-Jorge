@@ -210,7 +210,6 @@
 
 <section id="proyectos" style="margin-top:30px">
   <h2 style="margin:0 0 8px">Proyectos</h2>
-
   <div class="card-grid">
     <a href="Proyecto1.html" class="card">
       <h3>Proyecto 1 — RickAndMorty</h3>
@@ -234,29 +233,31 @@
     </a>
   </div>
 
-  <!-- Proyecto Final destacado con diseño verde -->
-  <div style="display:flex; justify-content:center; margin-top:50px;">
-    <a href="Final.html" 
-       class="card"
+  <!-- ✅ Proyecto FINAL centrado y más grande (mantiene tu diseño verde-negro) -->
+  <div style="display:flex; justify-content:center; margin-top:40px;">
+    <a href="Final.html" class="card" 
        style="
-         width:85%;
-         max-width:650px;
+         width:90%;
+         max-width:720px;
          text-align:center;
-         background:linear-gradient(135deg, #0a1f0a, #123d12);
-         border:2px solid #3cff78;
-         box-shadow:0 0 20px rgba(60,255,120,0.4);
-         padding:35px;
          transform:scale(1.05);
+         border:1px solid var(--accent);
+         box-shadow:0 0 12px rgba(107,142,35,0.5);
          transition:all 0.3s ease;
        "
        onmouseover="this.style.transform='scale(1.1)'"
        onmouseout="this.style.transform='scale(1.05)'">
-      <h3 style="font-size:1.8em; color:#3cff78;">Proyecto FINAL — Superstore AWS</h3>
-      <p style="font-size:1.1em;">Pipeline ETL Serverless (AWS Lambda)</p>
-      <div class="tag" style="background:#3cff78; color:#0a0f0a; font-weight:bold;">FINAL</div>
+      <h3 style="font-size:20px; color:var(--accent);">
+        Proyecto FINAL — Superstore AWS
+      </h3>
+      <p style="font-size:15px;">Pipeline ETL Serverless (AWS Lambda)</p>
+      <div class="tag" style="background:rgba(107,142,35,0.25); color:var(--accent); font-weight:bold;">
+        FINAL
+      </div>
     </a>
   </div>
 </section>
+
 
 
 
