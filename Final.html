@@ -438,124 +438,81 @@ def lambda_handler(event, context):
         <button class="copy-btn" onclick="copyCode('master')">Copiar</button>
         <pre id="master"><code>
 
-import pymysql
-import os
+import json
+import lambda_clean_data
+import lambda_insert_data
+import lambda_update_kpis  # creación de base y tablas
 
 def lambda_handler(event, context):
-    conn = pymysql.connect(
-        host=os.environ["DB_HOST"],
-        user=os.environ["DB_USER"],
-        password=os.environ["DB_PASS"],
-        database=os.environ["DB_NAME"]
-    )
-    cursor = conn.cursor()
+    """
+    Lambda  que ejecuta diferentes procesos según el parámetro 'action'.
+    - clean  → Limpieza y procesamiento de datos
+    - create → Creación de base y tablas
+    - insert → Inserción de datos procesados
+    - all    → Ejecuta clean → create → insert (flujo completo ETL)
+    """
 
-    # --- CREACIÓN DE TABLAS SI NO EXISTEN ---
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS kpi_summary (
-            total_sales DECIMAL(12,2),
-            total_profit DECIMAL(12,2),
-            profit_margin DECIMAL(6,2),
-            avg_ship_time DECIMAL(6,2),
-            num_orders INT,
-            avg_discount DECIMAL(6,2)
-        )
-    """)
+    try:
+        action = event.get("action")
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS sales_by_category (
-            category VARCHAR(100),
-            total_sales DECIMAL(12,2),
-            total_profit DECIMAL(12,2)
-        )
-    """)
+        if not action:
+            return {
+                "statusCode": 400,
+                "body": json.dumps({
+                    "error": "Falta el parámetro 'action'. Usa: clean, create, insert o all."
+                })
+            }
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS sales_by_month (
-            month VARCHAR(10),
-            total_sales DECIMAL(12,2)
-        )
-    """)
+        # --- Llamadas a cada Lambda individual ---
+        if action == "clean":
+            print(" Ejecutando limpieza de datos...")
+            result = lambda_clean_data.lambda_handler(event, context)
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS top_products (
-            product_name VARCHAR(200),
-            total_sales DECIMAL(12,2)
-        )
-    """)
+        elif action == "create":
+            print(" Creando base de datos y tablas...")
+            result = lambda_update_kpis.lambda_handler(event, context)
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS sales_by_region (
-            region VARCHAR(50),
-            total_sales DECIMAL(15,2),
-            total_profit DECIMAL(15,2)
-        )
-    """)
+        elif action == "insert":
+            print(" Insertando datos limpios en base...")
+            result = lambda_insert_data.lambda_handler(event, context)
 
-    # --- LIMPIAR Y ACTUALIZAR DATOS ---
-    # KPIs globales
-    cursor.execute("TRUNCATE TABLE kpi_summary")
-    cursor.execute("""
-        INSERT INTO kpi_summary
-        SELECT 
-            SUM(sales),
-            SUM(profit),
-            (SUM(profit)/SUM(sales))*100,
-            AVG(DATEDIFF(ship_date, order_date)),
-            COUNT(DISTINCT order_id),
-            AVG(discount)*100
-        FROM sales
-    """)
+        elif action == "all":
+            print(" Ejecutando flujo completo ETL: clean → create → insert")
+            result_clean = lambda_clean_data.lambda_handler(event, context)
+            result_create = lambda_update_kpis.lambda_handler(event, context)
+            result_insert = lambda_insert_data.lambda_handler(event, context)
 
-    # Ventas por categoría
-    cursor.execute("TRUNCATE TABLE sales_by_category")
-    cursor.execute("""
-        INSERT INTO sales_by_category
-        SELECT category, SUM(sales), SUM(profit)
-        FROM sales
-        GROUP BY category
-    """)
+            result = {
+                "clean": result_clean,
+                "create": result_create,
+                "insert": result_insert
+            }
 
-    # Ventas por mes
-    cursor.execute("TRUNCATE TABLE sales_by_month")
-    cursor.execute("""
-        INSERT INTO sales_by_month
-        SELECT DATE_FORMAT(order_date, '%Y-%m'), SUM(sales)
-        FROM sales
-        GROUP BY DATE_FORMAT(order_date, '%Y-%m')
-    """)
+        else:
+            return {
+                "statusCode": 400,
+                "body": json.dumps({
+                    "error": f"Acción '{action}' no reconocida. Usa: clean, create, insert o all."
+                })
+            }
 
-    # Top 10 productos
-    cursor.execute("TRUNCATE TABLE top_products")
-    cursor.execute("""
-        INSERT INTO top_products
-        SELECT product_name, SUM(sales)
-        FROM sales
-        GROUP BY product_name
-        ORDER BY SUM(sales) DESC
-        LIMIT 10
-    """)
+        # --- Respuesta estándar ---
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "message": f"Proceso '{action}' ejecutado correctamente.",
+                "result": result
+            })
+        }
 
-    # Ventas por región (nueva tabla)
-    cursor.execute("TRUNCATE TABLE sales_by_region")
-    cursor.execute("""
-        INSERT INTO sales_by_region (region, total_sales, total_profit)
-        SELECT 
-            region,
-            SUM(sales) AS total_sales,
-            SUM(profit) AS total_profit
-        FROM sales
-        GROUP BY region;
-    """)
-
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    print(" Tablas KPI actualizadas correctamente ")
-    return {"statusCode": 200, "body": "Tablas KPI actualizadas correctamente"}
-
-        
+    except Exception as e:
+        print(f" Error en main: {str(e)}")
+        return {
+            "statusCode": 500,
+            "body": json.dumps({
+                "error": str(e)
+            })
+        }   
         </code></pre>
       </div>
     </div>
