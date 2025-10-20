@@ -4,8 +4,8 @@ version: "3.9"
 services:
   app:
     build: .
-    container_name: proyecto_final_app
-    command: python app.py
+    container_name: AWSdata
+    command: python dasbord.py
     ports:
       - "5000:5000"   # Mapea el puerto local al contenedor
     restart: always
